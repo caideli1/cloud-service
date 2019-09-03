@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.backend.dao.NoOffDao">
+	<update id="updateNoOffInfo" parameterType="com.cloud.backend.model.NoOffModel">
+		UPDATE sys_nooff 
+		SET code = #{code},
+			name = #{name},
+			value = #{value},
+			status = #{status},
+			update_time = #{updateTime} 
+		WHERE
+			id = #{id}
+	</update>
+</mapper>

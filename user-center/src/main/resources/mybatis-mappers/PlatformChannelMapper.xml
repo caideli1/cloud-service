@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.platform.dao.PlatformChannelDao">
+
+    <select id="getPlatformChannel" parameterType="Map" resultType="com.cloud.platform.model.PlatformChannelModel">
+        select * from platform_channel
+        <where>
+            1=1 and is_delete = 0
+            <if test="id != null and id != ''">
+                and id = #{id}
+            </if>
+            <if test="channelStatus !=null and channelStatus != ''">
+                and channel_status = #{channelStatus}
+            </if>
+            <if test="channelName !=null and channelName != '' ">
+                and channel_name like concat('%', #{channelName},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="createPlatformChannel" parameterType="com.cloud.platform.model.PlatformChannelModel">
+        insert into platform_channel
+        (channel_name, channel_url,create_time)
+          VALUES
+          (
+          #{channelName},#{channelUrl},now()
+          )
+    </insert>
+
+    <update id="modifyPlatformChannel" parameterType="com.cloud.platform.model.PlatformChannelModel">
+        update platform_channel
+        set channel_name = #{channelName},
+            channel_url = #{channelUrl}
+        where id = #{id}
+    </update>
+
+    <update id="deletePlatformChannel" >
+        update platform_channel
+        set  is_delete = 1
+        where id in (${ids})
+    </update>
+
+    <select id="getPlatformCount" parameterType="Map" resultType="com.cloud.platform.model.PlatformChannelCount">
+select a.channel_name ,
+       count(distinct b.id) channelLoginNo,
+       count(distinct c.id) loanNo,
+       count(distinct d.id) passedNo,
+       count(distinct e.id) repayNo,
+       count(distinct f.id) dueNo,
+       count(distinct g.id) firstDueNo
+from platform_channel a left join user_info b on a.channel_name = b.channel
+                        left join user_order c on b.id=c.user_id and c.id=(select min(id) from user_order where user_id=b.id)
+                        left join user_order d on b.id=d.user_id and d.check_status = 7 and d.id=(select min(id) from user_order where user_id=b.id)
+                        left join finance_pay_log e on b.id=e.customer_no and e.id =(select id from finance_pay_log where order_status =1 and loan_type in (3,4,5,6) and order_no =(select order_num from user_order where id =(select min(id) from user_order where user_id=b.id)))
+                        left join finance_due_order f on b.id=f.customer_no and f.id = (select max(id) from finance_due_order where is_extension = 0 and due_end = '0000-00-00' and order_no=(select order_num from user_order where id =(select min(id) from user_order where user_id=b.id)))
+                        left join finance_due_order g on b.id=g.customer_no and g.id = (select min(id) from finance_due_order where   order_no=(select order_num from user_order where id =(select min(id) from user_order where user_id=b.id)))
+  <where>
+      1=1
+      <if test="channelName != null and channelName != '' ">
+          and a.channel_name like concat('%',#{channelName},'%')
+      </if>
+  </where>
+  group by a.id
+    </select>
+
+    <update id="upOrDownChannel" parameterType="Map">
+        update platform_channel
+        set channel_status = #{channelStatus}
+        where id = #{id}
+    </update>
+
+</mapper>

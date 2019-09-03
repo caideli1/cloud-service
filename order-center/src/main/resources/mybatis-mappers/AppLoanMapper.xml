@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.app.dao.AppLoanDao">
+    <sql id="where">
+        <where>
+            l.product_id = p.id
+            <if test="loanStatus != null">
+               and l.loan_status = #{loanStatus}
+            </if>
+            and l.user_id = #{userId}
+        </where>
+    </sql>
+
+    <update id="updateBankCardStatus" parameterType="Map">
+        update user_bank_card set status = #{status} where bank_account = #{bankNo} and user_id=#{userId}
+        order by binding_time desc limit 1
+    </update>
+
+
+    <select id="selectAllLoansById" resultMap="loanInfo">
+        select
+            l.id,
+            l.user_id,
+            l.product_id,
+            l.loan_number,
+            l.loan_channel,
+            l.borrow_amount,
+            l.loan_status,
+            l.loan_start_date,
+            l.loan_end_date,
+            l.overdue_status,
+            l.extension_due_date,
+            p.term
+        from user_loan l,
+             product_loan p
+        <include refid="where"/>
+    </select>
+
+    <select id="selectLoanInfoById" resultMap="loanInfo" parameterType="java.lang.String">
+        select
+            l.*,
+            p.term,
+            c.bank_name,
+            c.bank_account
+        from user_loan l,
+             product_loan p,
+             user_bank_card c
+        where l.product_id = p.id and l.user_id = c.user_id
+              and l.loan_number = #{loanId}
+        order by c.binding_time desc
+        limit 1
+    </select>
+
+    <resultMap id="loanInfo" type="com.cloud.model.appUser.AppUserLoanInfo">
+        <id column="id" property="id"></id>
+        <result column="user_id" property="userId"/>
+        <result column="product_id" property="productId"/>
+        <result column="loan_number" property="loanNumber"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_phone" property="userPhone"/>
+        <result column="overdue_day" property="overdueDay"/>
+        <result column="loan_channel" property="loanChannel"/>
+        <result column="borrow_amount" property="borrowAmount"/>
+        <result column="loan_money_amount" property="loanMoneyAmount"/>
+        <result column="should_repay_amount" property="shouldRepayAmount"/>
+        <result column="paid_total_amount" property="paidTotalAmount"/>
+        <result column="late_charge" property="lateCharge"/>
+        <result column="defer_disbursement" property="deferDisbursement"/>
+        <result column="overdue_status" property="overdueStatus"/>
+        <result column="loan_status" property="loanStatus"/>
+        <result column="balance_date_status" property="balanceDateStatus"/>
+        <result column="create_time" property="createTime"/>
+        <result column="balance_date" property="balanceDate"/>
+        <result column="overdue_start_date" property="overdueStartDate"/>
+        <result column="extension_due_date" property="extensionDueDate"/>
+        <result column="real_closing_date" property="realClosingDate"/>
+        <result column="loan_end_date" property="loanEndDate"/>
+        <result column="loan_start_date" property="loanStartDate"/>
+        <result column="term" property="term"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_account" property="bankAccount"/>
+    </resultMap>
+
+    <update id="updateLoanInfo" parameterType="com.cloud.model.appUser.AppUserLoanInfo">
+        update user_loan
+        set
+        <if test="lateCharge != null">
+               late_charge = #{lateCharge},
+        </if>
+        <if test="overdueDay != null">
+               overdue_day = #{overdueDay},
+        </if>
+        <if test="loanStatus != null">
+               loan_status = #{loanStatus},
+        </if>
+        <if test="extensionDueDate != null">
+               extension_due_date = #{extensionDueDate},
+        </if>
+        <if test="deferDisbursement != null">
+               defer_disbursement = #{deferDisbursement},
+        </if>
+        <if test="paidTotalAmount != null">
+               paid_total_amount = #{paidTotalAmount},
+        </if>
+        <if test="balanceDate != null">
+               balance_date = #{balanceDate},
+        </if>
+        <if test="balanceDateStatus != null">
+               balance_date_status = #{balanceDateStatus},
+        </if>
+        <if test="realClosingDate != null">
+               real_closing_date = #{realClosingDate},
+        </if>
+        <if test="overdueStatus != null">
+               overdue_status = #{overdueStatus},
+        </if>
+        overdue_start_date = #{overdueStartDate},
+        loan_number = loan_number
+        where loan_number = #{loanNumber}
+    </update>
+    
+    <insert id="saveFinanceExtension" parameterType="com.cloud.order.model.FinanceExtensionModel" useGeneratedKeys="true" keyProperty="id">
+        insert into finance_extension
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="extensionNo != null">
+                extension_no,
+            </if>
+            <if test="extensionStart != null">
+                extension_start,
+            </if>
+            <if test="extensionEnd != null">
+                extension_end,
+            </if>
+            <if test="extensionStatus != null">
+                extension_status,
+            </if>
+            <if test="orderNo != null">
+                order_no,
+            </if>
+            <if test="loanNumber != null">
+                loan_number,
+            </if>
+            <if test="createAt != null">
+                create_at,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="extensionNo != null">
+                #{extensionNo},
+            </if>
+            <if test="extensionStart != null">
+                #{extensionStart},
+            </if>
+            <if test="extensionEnd != null">
+                #{extensionEnd},
+            </if>
+            <if test="extensionStatus != null">
+                #{extensionStatus},
+            </if>
+            <if test="orderNo != null">
+                #{orderNo},
+            </if>
+            <if test="loanNumber != null">
+                #{loanNumber},
+            </if>
+            <if test="createAt != null">
+                #{createAt},
+            </if>
+        </trim>
+    </insert>
+
+    <select id="queryRepayByOrderNum" parameterType="java.lang.String" resultType="com.cloud.order.model.FinanceRepayModel">
+        select *
+        FROM
+        finance_repay
+        where
+        order_no= #{orderId}
+    </select>
+
+    <update id="updateDueOrderByOrderId" parameterType="java.lang.String">
+        update finance_due_order
+            <!-- 展期 -->
+        set is_extension = 1
+        where order_no = #{orderId}
+    </update>
+
+    <select id="queryRepayById" resultType="com.cloud.order.model.FinanceRepayModel">
+        select
+               p.id,
+               p.order_status as orderStatus,
+               p.pay_date as payDate,
+               p.pay_status as payStatus,
+               p.actual_amount as actualAmount,
+               p.loan_number as loanNumber
+        from finance_repay p
+        where customer_no = #{userId}
+        and loan_type != #{loanType}
+    </select>
+</mapper>

@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.UserDao">
+
+    <resultMap id="UserInfoMap" type="com.cloud.model.user.UserInfo">
+        <id column="id" property="id"></id>
+        <result column="first_name" property="firstName" ></result>
+        <result column="last_name" property="lastName" ></result>
+        <result column="sex" property="sex" ></result>
+        <result column="cell_phone" property="cellPhone" ></result>
+        <result column="email" property="email" ></result>
+        <result column="status" property="status" ></result>
+        <result column="birthday" property="birthday" ></result>
+        <result column="marriage_status" property="marriageStatus" ></result>
+        <result column="student_status" property="studentStatus" ></result>
+        <result column="channel" property="channel" ></result>
+        <result column="religion" property="religion" ></result>
+        <result column="invite_count" property="inviteCount" ></result>
+        <result column="aadhaar_account" property="aadhaarAccount" ></result>
+        <result column="aadhaar_url_front" property="aadhaarUrlFront" ></result>
+        <result column="aadhaar_url_back" property="aadhaarUrlback" ></result>
+        <result column="loan_purpose" property="loanPurpose"></result>
+        <result column="postcode" property="postCode" ></result>
+        <result column="update_time" property="updateTime" ></result>
+        <result column="register_time" property="registerTime" ></result>
+		<result column="is_identified" property="isIdentified"></result>
+        <association property="userInfoExpand" javaType="com.cloud.model.user.UserInfoExpand">
+            <id column="eid" property="id"></id>
+            <result column="voter_id_card" property="voterIdCard" ></result>
+            <result column="facebook_account" property="facebookAccount" ></result>
+            <result column="whatsapp_account" property="whatsappAccount" ></result>
+            <result column="school" property="school" ></result>
+            <result column="education_degree" property="educationDegree" ></result>
+            <result column="profession" property="profession" ></result>
+            <result column="position" property="position" ></result>
+            <result column="company_name" property="companyName" ></result>
+            <result column="work_year" property="workYear" ></result>
+            <result column="work_card" property="workCard" ></result>
+            <result column="skype_account" property="skypeAccount" ></result>
+            <result column="pancard_account" property="pancardAccount" ></result>
+            <result column="specialty" property="specialty" ></result>
+            <result column="enrollment_year" property="enrollmentYear" ></result>
+            <result column="alimony" property="alimony" ></result>
+        </association>
+        <collection property="userBankCardList" ofType="com.cloud.model.user.UserBankCard">
+            <id column="cid" property="id"></id>
+            <result column="account_name" property="accountName" ></result>
+            <result column="bank_name" property="bankName" ></result>
+            <result column="bank_account" property="bankAccount" ></result>
+            <result column="binding_time" property="bindingTime"></result>
+            <result column="ifsc_code" property="ifscCode"></result>
+            <result column="cstatus" property="status"></result>
+			<result column="vStatus" property="vStatus"></result>
+        </collection>
+        <collection property="userSalaryList" ofType="com.cloud.model.user.UserSalary">
+            <id column="sid" property="id"></id>
+            <result column="salary" property="salary" ></result>
+            <result column="sc" property="createTime" ></result>
+        </collection>
+    </resultMap>
+
+	<select id="getUserIdByAddressItem" resultType="long">
+		select  user_id
+		from  user_address
+		where
+		1=1
+		<if test="state!=null and  state!=''">
+			and   state=#{state}
+		</if>
+		<if test="district!=null and  district!=''">
+			and   district=#{state}
+		</if>
+	</select>
+   <select id="getUserInfoById" parameterType="java.lang.Long" resultMap="UserInfoMap">
+      SELECT
+        i.id,
+        i.first_name,
+        i.last_name,
+        i.sex,
+        i.cell_phone,
+        i.email,
+        i.status,
+        i.birthday,
+        i.marriage_status,
+        i.student_status,
+        i.channel,
+        i.religion,
+        i.invite_count,
+        i.aadhaar_account,
+        i.aadhaar_url_front,
+        i.aadhaar_url_back,
+        i.loan_purpose,
+        i.postcode,
+        i.update_time,
+        i.register_time,
+        i.is_identified,
+        e.id eid,
+        e.voter_id_card,
+        e.facebook_account,
+        e.whatsapp_account,
+        e.skype_account,
+        e.pancard_account,
+        e.school,
+        e.education_degree,
+        e.profession,
+        e.position,
+        e.company_name,
+        e.work_year,
+        e.work_card,
+        e.specialty,
+        e.enrollment_year,
+        e.alimony,
+        s.id sid,
+        s.salary,
+        s.create_time sc,
+        c.id cid,
+        c.account_name,
+        c.bank_name,
+        c.bank_account,
+        c.ifsc_code,
+        c.status cstatus,
+        c.binding_time,
+        IF(c.id is NOT NULL AND rav.status is NULL, 'unverified', NULL) AS vStatus
+      FROM user_info i
+      LEFT JOIN user_info_expand e ON i.id = e.user_id
+      LEFT JOIN user_salary s ON i.id = s.user_id
+      LEFT JOIN user_bank_card c ON i.id = c.user_id
+      LEFT JOIN razorpay_acount_validation rav ON c.user_id = rav.user_id AND c.id = rav.user_bankcard_id
+      WHERE i.id = #{id}
+      ORDER BY c.binding_time DESC
+    </select>
+
+    <select id="getUserInfoList" resultType="com.cloud.model.user.UserInfo">
+        SELECT
+          id,
+          first_name,
+          last_name,
+          sex,
+          cell_phone,
+          status,
+          aadhaar_account,
+          invite_count,
+          register_time,
+		  IFNULL(tmp.credit_count,0) credit_count
+        FROM
+          user_info
+		  LEFT JOIN (
+		  SELECT
+			count(*) credit_count,
+			customer_no
+		  FROM
+			finance_loan
+		  WHERE
+			order_status = 1
+		  GROUP BY customer_no
+		  ) tmp
+		ON
+		  tmp.customer_no = user_info.id
+        WHERE 1=1
+          <if test="id != null and id != ''">
+              AND id LIKE CONCAT('%',#{id},'%')
+          </if>
+          <if test="phone != null and phone != ''">
+              AND cell_phone LIKE CONCAT('%',#{phone},'%')
+          </if>
+          <if test="aadhaar != null and aadhaar != ''">
+              AND aadhaar_account LIKE CONCAT('%',#{aadhaar},'%')
+          </if>
+          <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+              AND register_time BETWEEN #{startTime} AND #{endTime}
+          </if>
+          <if test="status != null">
+              AND status = #{status}
+          </if>
+		ORDER BY
+			register_time DESC
+    </select>
+
+	<resultMap id="loanListMap" type="com.cloud.model.user.UserLoan">
+		<id column="id" property="id"></id>
+		<result column="user_id" property="userId"></result>
+		<result column="product_id" property="productId"></result>
+		<result column="user_name" property="userName"></result>
+		<result column="user_phone" property="userPhone"></result>
+		<result column="loan_channel" property="loanChannel"></result>
+		<result column="borrow_amount" property="borrowAmount"></result>
+		<result column="loan_status" property="loanStatus"></result>
+		<result column="loan_number" property="loanNumber"></result>
+		<result column="create_time" property="createTime"></result>
+		<result column="balance_date" property="balanceDate"></result>
+		<result column="overdue_start_date" property="overdueStartDate"></result>
+		<result column="extension_due_date" property="extensionDueDate"></result>
+		<result column="real_closing_date" property="realClosingDate"></result>
+		<result column="loan_end_date" property="loanEndDate"></result>
+		<result column="loan_start_date" property="loanStartDate"></result>
+		<result column="product_name" property="productName"></result>
+		<result column="loan_period" property="loanPeriod"></result>
+		<result column="apply_num" property="applyNum"></result>
+		<result column="overdue_day" property="overdueDay"></result>
+		<result column="handler" property="handler"></result>
+		<result column="repaid_amount" property="repaidAmount"></result>
+		<result column="should_total_repay" property="shouldTotalRepay"></result>
+		<result column="overdue_status" property="overdueStatus"></result>
+	</resultMap>
+
+	<select id="getUserLoanList" resultMap="loanListMap">
+	  SELECT
+		l.id,
+		l.user_id,
+		l.product_id,
+		l.user_name,
+		l.user_phone,
+		l.loan_channel,
+		l.borrow_amount,
+		l.loan_status,
+		l.loan_number,
+		l.create_time,
+		l.balance_date,
+		l.overdue_start_date,
+		l.extension_due_date,
+		l.real_closing_date,
+		l.loan_end_date,
+		l.loan_start_date,
+		l.overdue_status,
+		p.NAME product_name,
+		p.term loan_period,
+		p.repayment_type,
+		CONCAT('MN', user_order.order_num,'PD') apply_num,
+		fdo.due_days overdue_day,
+		re.HANDLER HANDLER,
+		rel.amount repaid_amount,
+		IF( offline.id is null ,
+		l.borrow_amount + IFNULL(fdo.due_amount, 0),
+		CONVERT (
+		l.borrow_amount + IFNULL(
+		l.borrow_amount * (
+		DATEDIFF( offline.account_date, due.due_start ) + 1
+		) * product_interest_penalty.rate,
+		0
+		),
+		DECIMAL ( 10, 2 )
+		)
+		)should_total_repay
+		FROM
+		user_loan l
+		JOIN user_order ON user_order.order_num = l.loan_number
+		JOIN product_loan p ON l.product_id = p.id
+		JOIN product_interest_penalty ON p.penalty_interest_id = product_interest_penalty.id and product_interest_penalty.is_penalty = 1
+		LEFT JOIN finance_repay re ON re.order_no = l.loan_number
+		AND re.pay_status = 1
+		LEFT JOIN finance_pay_log rel ON rel.order_no = l.loan_number
+		AND rel.pay_status = 1
+		AND rel.loan_type IN ( 3, 4, 5 )
+		LEFT JOIN finance_due_order fdo ON fdo.order_no = l.loan_number
+		AND fdo.is_extension = 0
+		LEFT JOIN (
+		SELECT
+		MAX(due_start) due_start,
+		order_no
+		FROM
+		finance_due_order
+		GROUP BY
+		order_no
+		) AS due ON due.order_no = user_order.order_num
+		LEFT JOIN order_offline_repay_voucher offline ON offline.order_no = user_order.order_num
+		WHERE
+			1=1
+		<if test="loanNumber != null and loanNumber != ''">
+			AND  CONCAT('MN', user_order.order_num,'PD') LIKE CONCAT('%',#{loanNumber},'%')
+		</if>
+		<if test="userId != null and userId != ''">
+			AND l.user_id = #{userId}
+		</if>
+		<if test="phone != null and phone != ''">
+			AND l.user_phone LIKE CONCAT('%',#{phone},'%')
+		</if>
+		<if
+			test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+			AND l.create_time BETWEEN #{startTime} AND #{endTime}
+		</if>
+		<if test="handlerType != null">
+			AND re.handler = #{handlerType}
+		</if>
+		<if test="loanStatus != null">
+			AND l.loan_status = #{loanStatus}
+		</if>
+        ORDER BY
+          create_time DESC
+    </select>
+
+    <select id="getUserLoanById" parameterType="Integer" resultType="com.cloud.model.user.UserLoan">
+		SELECT
+			l.id,
+			l.user_id,
+			l.product_id,
+			l.user_name,
+			l.user_phone,
+			l.loan_channel,
+			l.borrow_amount,
+			l.loan_money_amount,
+			l.should_repay_amount,
+			l.paid_total_amount,
+			l.late_charge,
+			l.defer_disbursement,
+			l.overdue_status,
+			l.balance_date_status,
+			l.loan_status,
+			l.loan_number,
+			l.create_time,
+			l.balance_date,
+			l.extension_due_date,
+			l.real_closing_date,
+			l.loan_end_date,
+			l.loan_start_date,
+			fdo.due_days overdue_day,
+			p.NAME product_name,
+			p.repayment_type,
+			IFNULL( extension_info.extension_count, 0 ) extension_count,
+		    CONCAT('MN',l.loan_number,'PD')	 apply_num,
+			IFNULL(due_order_count.due_count, 0) due_count,
+			due_order.due_start overdue_start_date,
+			due_order.due_end overdue_end_date
+		FROM
+			user_loan l
+			JOIN user_order ON user_order.order_num = l.loan_number
+			LEFT JOIN product_loan p ON l.product_id = p.id
+			LEFT JOIN finance_due_order fdo ON fdo.order_no = l.loan_number
+			AND fdo.is_extension = 0
+		LEFT JOIN
+		(
+			SELECT
+				count(*) extension_count,
+				order_no
+			FROM finance_extension
+			JOIN user_loan
+			ON user_loan.loan_number = finance_extension.order_no
+			WHERE user_loan.id = #{id}
+		) AS extension_info
+		ON extension_info.order_no = l.loan_number
+		LEFT JOIN (
+			SELECT
+				count(*) due_count,
+				order_no
+			FROM finance_due_order
+			JOIN user_loan
+			ON user_loan.loan_number = finance_due_order.order_no
+			WHERE user_loan.id = #{id}
+		) AS due_order_count
+		ON due_order_count.order_no = l.loan_number
+		LEFT JOIN (
+		SELECT
+				id,
+				order_no,
+				due_start,
+				due_end
+		FROM finance_due_order
+		WHERE
+			id = (
+				SELECT
+					MAX(finance_due_order.id)
+				FROM finance_due_order
+				JOIN user_loan
+				ON user_loan.loan_number = finance_due_order.order_no
+				WHERE user_loan.id = #{id}
+			)
+		) AS due_order
+		ON due_order.order_no = l.loan_number
+    WHERE l.id = #{id}
+
+    </select>
+
+    <select id="getUserAddressList" resultType="com.cloud.model.user.UserAddress">
+        SELECT *
+        FROM user_address
+        WHERE
+          user_id = #{userId}
+        AND
+          address_type = #{type}
+    </select>
+
+    <select id="getUserAccountByAadhaarAccount" resultType="com.cloud.model.user.UserInfo">
+        SELECT *
+        FROM user_info
+        WHERE
+          aadhaar_account = #{aadhaarAccount}
+    </select>
+
+    <select id="getUserAccountByPancardAccount" resultType="com.cloud.model.user.UserInfoExpand">
+        SELECT *
+        FROM user_info_expand
+        WHERE
+          pancard_account = #{pancardAccount}
+        GROUP BY user_id
+    </select>
+
+
+    <!--用户授信信息-->
+    <select id="getUserCreditExtension" resultType="java.util.Map">
+		SELECT
+			l.customer_no,
+			l.name,
+			SUM(l.loan_amount) AS total_loan_amount,
+			COUNT(1) as count,
+			(IFNULL(user_loan.should_repay_amount, 0) + IFNULL(user_loan.late_charge, 0)) AS total_should_repay,
+			ui.loan_amount_level * 1000 AS loanAmountLevel
+		FROM finance_loan l
+		LEFT JOIN user_loan ON user_loan.user_id = l.customer_no AND l.order_status = 1  AND user_loan.loan_status IN (0, 1, 4)
+		LEFT JOIN user_info AS ui ON ui.id = l.customer_no
+		WHERE l.customer_no = #{userId}
+    </select>
+
+    <!--用户逾期金额-->
+    <select id="getUserTotalDueAmount" resultType="java.util.Map">
+		SELECT
+			SUM(due_amount) now_due_amount,
+			p.*
+		FROM finance_due_order, (
+		  SELECT
+			  count(*) due_count,
+			  SUM(due_amount) total_due_amount
+		  FROM finance_due_order
+		  WHERE customer_no = #{userId}
+		) as p
+		WHERE due_end = 0 AND is_extension = 0 AND customer_no = #{userId}
+    </select>
+
+    <!--用户逾期信息列表-->
+    <select id="getUserDueInfoList" resultType="java.util.Map">
+		SELECT
+			uo.apply_num,
+			pl.name,
+			fo.id finance_due_order_id,
+			fo.loan_amount,
+			uo.order_num,
+			ul.loan_start_date create_time,
+			ul.id user_loan_id,
+			IFNULL(ul.real_closing_date,'') pay_date,
+			fo.due_start,
+			fo.due_end,
+			fo.due_days
+		FROM
+			finance_due_order fo
+			JOIN user_order uo ON fo.order_no = uo.order_num
+			JOIN product_loan pl ON pl.id = uo.product_id
+			JOIN finance_repay fr ON fr.order_no = uo.order_num
+			JOIN finance_loan fl ON fl.order_no = uo.order_num
+			JOIN user_loan ul ON ul.loan_number = uo.order_num
+		WHERE
+			fo.customer_no = #{userId}
+			<if test="orderNo != null and orderNo != ''">
+				AND fo.order_no = #{orderNo}
+			</if>
+		ORDER BY finance_due_order_id
+    </select>
+
+    <!--借据 订单 展期信息-->
+    <select id="getUserOrderExtensionInfoList" resultType="java.util.Map">
+		SELECT
+			id,
+			CONCAT('MN',order_no,'PD', '-', id) extension_no,
+			extension_start,
+			extension_end,
+			extension_status
+		FROM finance_extension
+		WHERE order_no = #{orderNo}
+    </select>
+
+    <select id="getCompanyNameCountWhenSamePhone" resultType="int">
+		SELECT
+			count( DISTINCT uih.company_name )
+		FROM
+			user_info_history uih
+			JOIN user_address ua ON uih.company_address_id = ua.id
+			JOIN (
+				SELECT
+					addr.company_phone,
+					his.user_id
+				FROM
+					user_info_history his
+					JOIN user_address addr ON his.company_address_id = addr.id
+				WHERE
+					his.order_no = #{orderNo}
+				) tmp ON ua.company_phone = tmp.company_phone
+		WHERE
+				uih.user_id != tmp.user_id
+				AND uih.company_name NOT IN ( SELECT NAME FROM risk_india_area )
+    </select>
+
+    <select id="getCompanyPhoneCountWhenSameName" resultType="int">
+		SELECT
+			COUNT( DISTINCT ( ua.company_phone ) )
+		FROM
+			user_address ua
+			JOIN user_info_history uih ON ua.id = uih.company_address_id
+			JOIN (
+			SELECT
+				company_name companyName,
+				user_id
+			FROM
+				user_info_history
+			WHERE
+				order_no = #{orderNo}
+			) tmp ON uih.company_name = tmp.companyName
+		WHERE
+			uih.user_id != tmp.user_id
+			AND NOT EXISTS (SELECT NAME FROM risk_india_area WHERE name = tmp.companyName )
+			AND uih.company_name NOT IN ( 'ola', 'uber', 'self business' )
+    </select>
+
+	<!--借据 订单 金额成分-->
+	<select id="userLoanAmountComposition" resultType="java.util.Map">
+			SELECT
+				userOrder.loan_amount AS `loan_amount`,
+				productLoan.repayment_type AS `repayment_type`,
+				IFNull( payLog.amount, 0 ) AS `pay_amount`,
+				IFNULL( due_not_end.due_amount, 0 ) AS `due_amount`,
+				IFNULL( financeLoan.loan_amount, 0 ) + IFNULL( due_not_end.due_amount, 0 ) + IFNULL( paid_due.paid_total_amount, 0 )  AS `should_repay_amount`,
+			CASE user_loan.loan_status
+					WHEN 2 THEN
+						IFNULL( financeLoan.loan_amount, 0 ) + IFNULL( paid_due.paid_total_amount, 0 )
+					ELSE
+						IFNULL( paySum.paySumAmount, 0 ) - (
+							IFNULL( extensionPay.paySumAmount, 0 ) - IFNULL( paid_due.paid_total_amount, 0 )
+						)
+			END AS `total_paied_amount`,
+			CASE
+					user_loan.loan_status
+					WHEN 2 THEN
+						0
+					ELSE
+						IFNULL( financeLoan.loan_amount, 0 ) + IFNULL( due_not_end.due_amount, 0 ) + (
+							IFNULL( extensionPay.paySumAmount, 0 ) - IFNULL( paid_due.paid_total_amount, 0 )
+							) - (
+							IFNULL( paySum.paySumAmount, 0 ) - IFNULL( paid_due.paid_total_amount, 0 )
+						)
+			END AS `no_repay_amount`,
+				IFNULL(extensionPay.extension_count, 0) extension_count,
+				IFNULL( finance_repay.loan_channel, 0 ) AS `repay_channel`,
+				IFNULL( reduction.reduction_ammount, 0 ) reduction_amount,
+				reduction.audit_time reduction_pass_time,
+				productLoan.term product_term,
+				product_interest_penalty.rate
+			FROM
+				user_order userOrder
+				LEFT JOIN user_loan ON user_loan.loan_number = userOrder.order_num
+				JOIN product_loan productLoan ON userOrder.product_id = productLoan.id
+				JOIN product_interest_penalty ON product_interest_penalty.id = productLoan.penalty_interest_id
+				LEFT JOIN finance_loan financeLoan ON financeLoan.order_no = userOrder.order_num
+				AND financeLoan.order_status = 1
+				LEFT JOIN finance_repay ON finance_repay.order_no = userOrder.order_num
+				AND finance_repay.order_status = 1
+				LEFT JOIN finance_pay_log payLog ON (
+					payLog.pay_status = 1
+					AND payLog.loan_type IN ( 1, 2, 7 )
+					AND payLog.order_no = financeLoan.order_no
+				)
+				LEFT JOIN finance_due_order due_not_end ON due_not_end.order_no = financeLoan.order_no
+				AND due_not_end.due_end = '0000-00-00'
+				LEFT JOIN (
+				SELECT
+					SUM( due_amount ) paid_total_amount,
+					order_no
+				FROM
+					finance_due_order
+				WHERE
+					due_end > '0000-00-00'
+					AND order_no = #{orderNo}
+				) AS paid_due ON paid_due.order_no = financeLoan.order_no
+				LEFT JOIN (
+					 SELECT loan_num, reduction_ammount AS reduction_ammount, audit_time FROM collection_record
+					 JOIN collection_interest_reduction ON collection_interest_reduction.collection_id = collection_record.id
+					 WHERE collection_interest_reduction.apply_status = 2
+				) reduction ON loan_num = financeLoan.order_no
+				LEFT JOIN (
+				SELECT
+					SUM( amount ) AS paySumAmount,
+					order_no
+				FROM
+					finance_pay_log
+				WHERE
+					loan_type IN ( 3, 4, 5, 6, 9, 10)
+					AND pay_status = 1
+				GROUP BY
+					order_no
+				) paySum ON paySum.order_no = financeLoan.order_no
+				LEFT JOIN (
+				SELECT
+					COUNT(*) extension_count,
+					SUM( amount ) AS paySumAmount,
+					order_no
+				FROM
+					finance_pay_log
+				WHERE
+					loan_type IN (6, 9, 10)
+					AND pay_status = 1
+				GROUP BY
+					order_no
+				) extensionPay ON extensionPay.order_no = financeLoan.order_no
+			WHERE
+				userOrder.order_num = #{orderNo}
+    </select>
+
+	<resultMap id="repayPartMap" type="com.cloud.model.product.OrderRepayPart">
+		<result column="loan_amount" property="loanAmount"></result>
+		<result column="due_amount" property="dueAmount"></result>
+		<result column="paid_due_amount" property="paidDueAmount"></result>
+		<result column="extension_amount" property="extensionAmount"></result>
+		<result column="reduction_amount" property="reductionAmount"></result>
+		<result column="no_repay_amount" property="noRepayAmount"></result>
+		<collection property="rateInfoList" ofType="com.cloud.model.product.OrderPartRateAmount">
+			<result column="name" property="name"></result>
+			<result column="rate" property="rate"></result>
+			<result column="rate_amount" property="amount"></result>
+			<result column="gst_amount" property="gstAmount"></result>
+		</collection>
+	</resultMap>
+
+	<resultMap id="rateInfoListMap" type="com.cloud.model.product.OrderPartRateAmount">
+		<result column="name" property="name"></result>
+		<result column="rate" property="rate"></result>
+		<result column="rate_amount" property="amount"></result>
+		<result column="gst_amount" property="gstAmount"></result>
+	</resultMap>
+
+	<!--应还金额明细 - 收费项目列表-->
+	<select id="userLoanRepayCompositionRateInfoList" resultMap="rateInfoListMap">
+		 SELECT
+			uo.id,
+			pr.rate_type_id,
+			pt.`name`,
+			pt.rate,
+			pt.`mode`,
+			pt.rate * uo.loan_amount rate_amount,
+			pt.rate * uo.loan_amount * psr.gst gst_amount
+		FROM
+			user_order uo
+			JOIN product_loan pl ON pl.id = uo.product_id
+			JOIN user_loan ON user_loan.loan_number = uo.order_num
+			LEFT JOIN product_loan_rate_type pr ON pr.product_id = pl.id
+			JOIN product_rate_type pt ON pt.id = pr.rate_type_id
+			JOIN product_service_rate psr ON pt.service_rate_id = psr.id
+		WHERE
+			uo.order_num = #{orderNo}
+			AND user_loan.loan_status NOT IN (3, 5)
+	</select>
+
+	<!--应还金额明细 - 其他费用 -->
+	<select id="userLoanRepayComposition" resultType="com.cloud.model.product.OrderRepayPart">
+		SELECT
+				userOrder.loan_amount,
+				paid_due.paid_total_amount paid_due_amount,
+				payLog.amount AS `pay_amount`,
+				due.due_amount AS `due_amount`,
+				reduction.reduction_ammount AS reduction_amount,
+				due.is_extension,
+				case user_loan.loan_status
+				WHEN 2 THEN 0
+				WHEN 3 THEN 0
+				WHEN 5 THEN 0
+				ELSE IFNULL(financeLoan.loan_amount, 0) + IFNULL(due.due_amount, 0)
+				END AS `no_repay_amount`,
+
+			IFNULL(extensionPay.extension_count, 0) extension_count,
+			productLoan.term product_term,
+			product_interest_penalty.rate
+			FROM
+				user_order userOrder
+				JOIN user_loan ON userOrder.order_num = user_loan.loan_number
+				LEFT JOIN finance_loan financeLoan ON financeLoan.order_no = userOrder.order_num
+				AND financeLoan.order_status = 1
+				LEFT JOIN finance_repay ON finance_repay.order_no = userOrder.order_num
+				AND finance_repay.order_status = 1
+				JOIN product_loan productLoan ON userOrder.product_id = productLoan.id
+				JOIN product_interest_penalty ON product_interest_penalty.id = productLoan.penalty_interest_id
+				LEFT JOIN finance_pay_log payLog ON (
+					payLog.pay_status = 1
+					AND payLog.loan_type IN ( 1, 2, 7 )
+					AND payLog.order_no = financeLoan.order_no
+				)
+				LEFT JOIN finance_due_order due ON due.order_no = financeLoan.order_no
+				AND due.due_end = '0000-00-00'
+				LEFT JOIN collection_record collection ON collection.due_id = due.id
+				LEFT JOIN collection_interest_reduction reduction ON reduction.collection_id = collection.id
+				AND reduction.apply_status = 2
+				LEFT JOIN (
+				SELECT
+					SUM( due_amount ) paid_total_amount,
+					order_no
+				FROM
+					finance_due_order
+				WHERE
+					due_end != '0000-00-00'
+					AND order_no = #{orderNo}
+				) AS paid_due ON paid_due.order_no = financeLoan.order_no
+				LEFT JOIN (
+				SELECT
+					SUM( amount ) AS paySumAmount,
+					order_no
+				FROM
+					finance_pay_log
+				WHERE
+					loan_type IN ( 3, 4, 5, 6, 9, 10)
+					AND pay_status = 1
+				GROUP BY
+					order_no
+				) paySum ON paySum.order_no = financeLoan.order_no
+				LEFT JOIN (
+				SELECT
+					COUNT(*) extension_count,
+					SUM( amount ) AS paySumAmount,
+					order_no
+				FROM
+					finance_pay_log
+				WHERE
+					loan_type IN (6, 9, 10)
+					AND pay_status = 1
+				GROUP BY
+					order_no
+				) extensionPay ON extensionPay.order_no = financeLoan.order_no
+			WHERE
+				userOrder.order_num = #{orderNo}
+
+    </select>
+
+
+    <select id="getRelativePhoneAsContactPhoneCount" resultType="int">
+		SELECT
+			COUNT(distinct user_contact.user_id )
+		FROM
+			user_contact,
+			(
+				SELECT
+					DISTINCT(phone)
+				FROM
+					user_contact
+				WHERE
+					relation IN ('Parent', 'Brother', 'Sister', 'Child')
+				AND
+					user_id = #{userId}
+					order by  create_time  desc limit 1
+			) tmp
+		WHERE
+			user_contact.phone = tmp.phone
+
+    </select>
+
+
+    <select id="getRelativePhoneAsApplyPhoneCount" resultType="int">
+		SELECT
+			COUNT( distinct user_id ) apply_count
+		FROM
+			user_order
+		JOIN
+		(
+			SELECT
+				DISTINCT(phone) realation_phone
+			FROM
+				user_contact
+			WHERE
+				relation IN ('Parent', 'Brother', 'Sister', 'Child')
+			AND
+				user_id = #{userId}
+				order by  create_time desc limit 2
+		) tmp
+		ON
+			tmp.realation_phone = user_order.user_phone
+
+    </select>
+
+	<select id="queryRelationUserIdByMobile" resultType="java.lang.String" >
+
+
+
+	select   distinct user_id
+	from
+	user_contact
+	where
+	phone=#{mobile}
+
+
+
+
+
+	</select>
+	<select id="queryRelationUserIdByUserId" resultType="java.lang.String">
+SELECT DISTINCT
+	user_id
+FROM
+	user_contact
+WHERE
+	phone IN (  SELECT phone FROM user_contact WHERE user_id = #{userId})
+	</select>
+
+	<select id="listQueryUserIdsByPhones" parameterType="List" resultType="java.lang.Long">
+		SELECT id FROM user_info WHERE cell_phone IN
+		<foreach collection="list" item="phone" index="index" separator="," open="(" close=")">
+			#{phone}
+		</foreach>
+	</select>
+
+	<select id="listQueryUserPhoneAsContactByPhone">
+		SELECT
+			uih.mobile
+		FROM
+			user_info_history uih
+			JOIN user_contact uc ON uc.id = uih.second_contact_id
+			OR uc.id = uih.first_contact_id
+		WHERE
+			uc.phone IN
+			<foreach collection="phoneList" item="phone" index="index" separator="," open="(" close=")">
+				#{phone}
+			</foreach>
+			<if test="excludedPhone != null and excludedPhone != ''">
+			 AND uih.mobile != #{excludedPhone}
+			</if>
+	</select>
+
+	<select id="listQueryUserContactPhoneByPhone">
+		SELECT
+			uc.phone
+		FROM
+			user_info_history uih
+			JOIN user_contact uc ON uc.id = uih.second_contact_id
+			OR uc.id = uih.first_contact_id
+		WHERE
+			uih.mobile IN ()
+			<foreach collection="phoneList" item="phone" index="index" separator="," open="(" close=")">
+				#{phone}
+			</foreach>
+			<if test="excludedPhone != null and excludedPhone != ''">
+			 	AND uc.phone != #{excludedPhone}
+			</if>
+	</select>
+
+</mapper>

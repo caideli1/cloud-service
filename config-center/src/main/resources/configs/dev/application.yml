@@ -1,0 +1,14 @@
+# 以下配置暂时放在application.yml中，但如果不是所有模块都用到的，最好放到所属模块的配置文件中
+moneed:
+  # redis 工具类相关配置 - 最好还是替换成 spring-data-redis
+  redis:
+    address: redis://116.62.153.117:16380
+    ip: 116.62.153.117
+    port: 16380
+    password:
+    timeout: 1000
+    min-idle: 5
+    max-idle: 200
+    max-active: -1
+    max-wait: -1
+

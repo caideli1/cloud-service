@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.CibilOrderDao">
+
+	<!-- 获取订单id -->
+	<select id="queryOrderNo" resultType="com.cloud.model.cibil.OrderTableModel">
+		select a.* from user_order a where a.order_num = #{orderNo}
+	</select>
+	<!-- kudos aadress -->
+    <select id="queryUserAds" resultType="com.cloud.model.user.UserAddress">
+		select * from user_address WHERE user_id=#{userId} AND address_type=#{adsType} ORDER BY create_time DESC LIMIT 1
+	</select>
+	<!-- kudos cibil api  -->
+    <select id="queryCibilInformation" resultType="com.cloud.model.cibil.LoanCIBILEntity">
+		SELECT
+			e.holds_full_name BorrowerFName,
+			e.birthday borrowerDOB,
+			b.sex borrowerGender,
+			b.email borrowerEmail,
+			c.company_name borrowerCompanyName,
+			b.aadhaar_account borrowerAdhaar,
+			e.permanent_no idnumber,
+			b.cell_phone borrowerPhone,
+			a.loan_amount borrowerRequestAmount,
+			b.loan_purpose BorrowerLoanPurpose,
+			a.apply_num requestReferenceNum,
+			d.salary borrowerIncome,
+			a.user_id userId,
+			b.postcode postcode
+		FROM
+			user_order a,
+			user_info b,
+			user_info_expand c,
+			user_salary d,
+			user_pan_card e
+		WHERE
+			a.user_id = b.id 
+			AND a.user_id = c.user_id 
+			AND a.user_id = d.user_id 
+			AND A.user_id = e.user_id
+			AND a.order_num = #{orderNo} 
+			ORDER BY d.create_time DESC 
+			LIMIT 1
+	</select>
+</mapper>

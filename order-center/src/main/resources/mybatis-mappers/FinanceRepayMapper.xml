@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.FinanceRepayDao">
+    <!--通用查询-->
+    <sql id="where">
+        where
+        1=1
+        <!--判定是否  拥有应还支付日期选项 -->
+        <if test="startRepayDate!=null and  startRepayDate!=''">
+            and
+            <!--应还款日变动 根据展期表进行变动 -->
+            CASE
+            WHEN finance_extension.extension_end is null THEN
+            finance_repay.repay_date
+            ELSE
+            finance_extension.extension_end
+            END &gt;=#{startRepayDate}
+        </if>
+        <if test="endRepayDate!=null and  endRepayDate!=''">
+            and
+            <!--应还款日变动 根据展期表进行变动 -->
+            CASE
+            WHEN finance_extension.extension_end is null THEN
+            finance_repay.repay_date
+            ELSE
+            finance_extension.extension_end
+            END&lt;= #{endRepayDate}
+        </if>
+        <!--判定是否  拥有实际支付日期选项-->
+        <if test="startPayDate!=null and  startPayDate!=''">
+            and finance_repay.pay_date &gt;= #{startPayDate}
+        </if>
+        <if test="endPayDate!=null and  endPayDate!=''">
+            and finance_repay.pay_date&lt;= #{endPayDate}
+        </if>
+        <!--用户编号绑定模糊查询-->
+        <if test="userId!=null and userId!=''">
+            <bind name="_userId" value="'%' + userId + '%'"/>
+            and finance_repay.customer_no like #{_userId}
+        </if>
+        <!--用户编号绑定模糊查询 待还记录的 条件查询 created by cadilei 2019/08/05-->
+        <if test="customerNo!=null and customerNo!=''">
+            and instr(finance_repay.customer_no,#{customerNo}) &gt; 0
+        </if>
+        <!--用户电话号码绑定模糊查询-->
+        <if test="phone!=null and  phone!=''">
+            <bind name="_phone" value="'%' + phone + '%'"/>
+            and finance_repay.mobile like #{_phone}
+        </if>
+        <!--用户电话号码绑定模糊查询 待还记录的 条件查询 created by cadilei 2019/08/05-->
+        <if test="mobile!=null and  mobile!=''">
+            and instr(finance_repay.mobile,#{mobile}) &gt; 0
+        </if>
+
+        <!--还款期数-->
+        <if test="loanPeriod!=null and loanPeriod!='' and loanPeriod!=0">
+            and finance_repay.loan_period=#{loanPeriod}
+        </if>
+        <!--还款通道-->
+        <if test="loanChannel!=null and loanChannel!='' and loanChannel!=0">
+            and finance_repay.loan_Channel=#{loanChannel}
+        </if>
+
+        <!--支付类型-->
+        <if test="payType!=null and payType!='' and payType!=0">
+            <if test="payType==1">
+                and finance_repay.loan_type='3'
+            </if>
+            <if test="payType==2">
+                and finance_repay.loan_type='5'
+            </if>
+            <if test="payType==3">
+                and finance_repay.loan_type='4'
+            </if>
+
+        </if>
+    </sql>
+
+
+    <sql id="repayFailWhere">
+        where
+        1=1
+        <!--判定是否  拥有应还支付日期选项 -->
+        <if test="startRepayDate!=null and  startRepayDate!=''">
+            and
+            <!--应还款日变动 根据展期表进行变动 -->
+            CASE
+            WHEN finance_extension.extension_end is null THEN
+            finance_repay.repay_date
+            ELSE
+            finance_extension.extension_end
+            END &gt;=#{startRepayDate}
+        </if>
+        <if test="endRepayDate!=null and  endRepayDate!=''">
+            and
+            <!--应还款日变动 根据展期表进行变动 -->
+            CASE
+            WHEN finance_extension.extension_end is null THEN
+            finance_repay.repay_date
+            ELSE
+            finance_extension.extension_end
+            END&lt;= #{endRepayDate}
+        </if>
+        <!--判定是否  拥有实际支付日期选项-->
+        <if test="startPayDate!=null and  startPayDate!=''">
+            and finance_repay.pay_date &gt;= #{startPayDate}
+        </if>
+        <if test="endPayDate!=null and  endPayDate!=''">
+            and finance_repay.pay_date&lt;= #{endPayDate}
+        </if>
+        <!--用户编号绑定模糊查询-->
+        <if test="userId!=null and userId!=''">
+            <bind name="_userId" value="'%' + userId + '%'"/>
+            and finance_repay.customer_no like #{_userId}
+        </if>
+        <!--用户电话号码绑定模糊查询-->
+        <if test="phone!=null and  phone!=''">
+            <bind name="_phone" value="'%' + phone + '%'"/>
+            and finance_repay.mobile like #{_phone}
+        </if>
+        <!--还款期数-->
+        <if test="loanPeriod!=null and loanPeriod!='' and loanPeriod!=0">
+            and finance_repay.loan_period=#{loanPeriod}
+        </if>
+        <!--还款通道-->
+        <if test="loanChannel!=null and loanChannel!='' and loanChannel!=0">
+            and log.loan_Channel=#{loanChannel}
+        </if>
+
+        <!--支付类型-->
+        <if test="payType!=null and payType!='' and payType!=0">
+            <if test="payType==1">
+                and log.loan_type='3'
+            </if>
+            <if test="payType==2">
+                and log.loan_type='5'
+            </if>
+            <if test="payType==3">
+                and log.loan_type='4'
+            </if>
+        </if>
+
+        <if test="handler!=null and handler!='' and handler!=0">
+            and log.`handler`=#{handler}
+        </if>
+    </sql>
+
+    <!--通用查询首部-->
+    <sql id="select">
+        SELECT
+
+        finance_repay.customer_no customerNo,
+        finance_repay.`name`,
+        finance_repay.mobile,
+        finance_repay.loan_period loanPeriod,
+        finance_repay.loan_amount loanAmount,
+        finance_repay.pay_amount payAmount,
+        finance_repay.bank_no bankNo,
+        finance_repay.order_status orderStatus,
+        finance_repay.id,
+        CONCAT('MN',finance_repay.order_no,'PD') orderNo,
+        CONCAT('MN',finance_repay.loan_number ,'PD') loanNumber,
+        finance_repay.actual_amount actualAmount,
+        <!--默认值判定-->
+        case when finance_repay.pay_date=0 then
+        null
+        else finance_repay.pay_date
+        end
+
+        payDate,
+        finance_repay.loan_type loanType,
+        finance_repay.pay_status payStatus,
+        finance_repay.loan_Channel loanChannel,
+        finance_repay.`handler`,
+        finance_repay.failure_reason failureReason,
+        finance_repay.pay_date payDate,
+        case when finance_extension.extension_end is null then finance_repay.repay_date
+        else finance_extension.extension_end end repayDate
+
+
+    </sql>
+
+    <!--已还款记录查询-->
+    <select id="queryRepaymentPaidList" resultType="com.cloud.order.model.FinanceRepayModel" parameterType="Map">
+        <include refid="select"/>
+        , CASE
+        WHEN finance_due_order.due_days is null THEN
+        0
+        ELSE
+        finance_due_order.due_days
+        END
+        dueDays
+        FROM
+        finance_repay
+        left join finance_extension on finance_repay.order_no=finance_extension.order_no and finance_extension.id
+        in(
+        select MAX(id) from finance_extension GROUP BY order_no
+        )
+        left join finance_due_order
+        on finance_repay.order_no= finance_due_order.order_no
+        and finance_due_order.due_end!='0000-00-00'
+        and finance_due_order.is_extension!='1'
+
+        <include refid="where"/>
+        <!--已还状态-->
+        and finance_repay.order_status='1'
+        <if test="handler!=null and handler!='' and handler!=0">
+                    and finance_repay.`handler`=#{handler}
+                </if>
+        order by finance_repay.pay_date DESC
+    </select>
+
+
+    <select id="queryFinanceExtensionList" resultType="com.cloud.order.model.FinanceRepayModel" parameterType="Map">
+        SELECT
+        fe.extension_end extensionEnd,
+        fe.create_at createTime,
+        log.customer_no customerNo,
+        log.`name`,
+        log.mobile,
+        log.amount payAmount,
+        log.bank_no bankNo,
+        log.order_status orderStatus,
+        log.id,
+        CONCAT('MN', log.order_no, 'PD') orderNo,
+        log.create_time payTime,
+        log.loan_type loanType,
+        log.pay_status payStatus,
+        log.loan_Channel loanChannel,
+        log.`handler`,
+        log.failure_reason failureReason,
+        fr.repay_date repayDate,
+        fr.loan_period loanPeriod,
+        fr.loan_amount loanAmount
+        FROM
+        finance_extension fe
+        JOIN	finance_repay AS fr ON fr.order_no = fe.order_no
+        JOIN finance_pay_log AS log ON log.order_no = fe.order_no AND log.loan_type IN (6, 9, 10)
+        AND DATE_FORMAT( log.create_time, '%Y-%m-%d' ) = fe.create_at AND log.repay_date = fe.extension_end
+        WHERE 1=1
+        <!--用户电话号码绑定模糊查询-->
+        <if test="phone!=null and  phone!=''">
+            <bind name="_phone" value="'%' + phone + '%'"/>
+            and log.mobile like #{_phone}
+        </if>
+        <if test="userId!=null and userId!=''">
+            <bind name="_userId" value="'%' + userId + '%'"/>
+            and log.customer_no like #{_userId}
+        </if>
+        <if test="extensionStartPayDate!=null and extensionStartPayDate!='' ">
+            and log.create_time>=#{extensionStartPayDate}
+        </if>
+        <if test="extensionEndPayDate!=null and extensionEndPayDate!='' ">
+            and log.create_time&lt;=#{extensionEndPayDate}
+        </if>
+        <if test="initStartRepayDate!=null and  initStartRepayDate!=''">
+            and  log.repay_date>=#{initStartRepayDate}
+        </if>
+        <if test="initEndRepayDate!=null and  initEndRepayDate!=''">
+            and  log.repay_date&lt;=#{initEndRepayDate}
+        </if>
+        <if test="extensionEndDateStart !=null and   extensionEndDateStart!=''">
+            and finance_extension.extension_end>=#{extensionEndDateStart}
+        </if>
+        <if test="extensionEndDateEnd !=null and   extensionEndDateEnd!=''">
+            and finance_extension.extension_end&lt;=#{extensionEndDateEnd}
+        </if>
+        <if test="extensionPayStatus !=null and  extensionPayStatus!='' ">
+            and  log.pay_status=#{extensionPayStatus}
+        </if>
+        order by log.create_time desc
+    </select>
+
+    <!--未还款记录查询-->
+    <select id="queryRepaymentUnpaidList" resultType="com.cloud.order.model.FinanceRepayModel" parameterType="Map">
+        <include refid="select"/>
+        FROM
+        finance_repay
+        left join finance_extension on finance_repay.order_no=finance_extension.order_no and finance_extension.id
+        in(
+        select MAX(id) from finance_extension GROUP BY order_no
+        )
+
+        <include refid="where"/>
+
+        <!--未还款状态-->
+        and finance_repay.order_status='3'
+
+        order by case when finance_extension.extension_end is null then finance_repay.repay_date
+        else finance_extension.extension_end end   desc
+    </select>
+    <!--还款失败记录查询-->
+    <select id="queryRepaymentFailedList" resultType="com.cloud.order.model.FinanceRepayModel" parameterType="Map">
+        SELECT
+        finance_repay.customer_no customerNo,
+        finance_repay.`name`,
+        finance_repay.mobile,
+        finance_repay.loan_period loanPeriod,
+        finance_repay.loan_amount loanAmount,
+        finance_repay.pay_amount payAmount,
+        finance_repay.bank_no bankNo,
+        log.order_status orderStatus,
+        finance_repay.id,
+        CONCAT('MN',finance_repay.order_no,'PD') orderNo,
+        CONCAT('MN',finance_repay.loan_number ,'PD') loanNumber,
+        finance_repay.actual_amount actualAmount,
+        log.create_time
+        payDate,
+        log.loan_type loanType,
+        log.pay_status payStatus,
+        log.loan_channel loanChannel,
+        log.`handler`,
+        log.failure_reason failureReason,
+
+        CASE
+        WHEN finance_extension.extension_end IS NULL THEN
+        finance_repay.repay_date ELSE finance_extension.extension_end
+        END repayDate
+        FROM
+        finance_repay
+        LEFT JOIN finance_extension ON finance_repay.order_no = finance_extension.order_no
+        AND finance_extension.id IN ( SELECT MAX( id ) FROM finance_extension GROUP BY order_no )
+        JOIN (
+        SELECT
+        *
+        FROM
+        finance_pay_log
+        WHERE
+        id IN ( SELECT Max( id ) FROM finance_pay_log where loan_type IN ( 3, 4, 5 ) and pay_status = 0 GROUP BY
+        order_no )
+        ) log ON log.order_no = finance_repay.order_no
+
+        <include refid="repayFailWhere"/>
+        <!--還款失敗狀態-->
+        and finance_repay.pay_status != 1
+        order by log.create_time DESC
+    </select>
+
+    <!--逾期订单查询-->
+    <select id="queryLateOrderList" resultType="com.cloud.order.model.FinanceDueOrderModel" parameterType="Map">
+
+        SELECT
+        finance_due_order.id,
+        CONCAT('MN',finance_due_order.order_no,'PD') orderNo,
+        finance_due_order.customer_no customerNo,
+        finance_due_order.`name`,
+        finance_due_order.mobile,
+        finance_due_order.loan_amount loanAmount,
+        finance_due_order.due_days dueDays,
+        finance_due_order.due_amount dueAmount,
+        finance_due_order.due_start dueStart,
+        case when finance_due_order.due_end = '0000-00-00' then null
+        else finance_due_order.due_end end dueEnd,
+        '逾期' loanStatus,
+        finance_due_order.finished_type finishedType,
+        user_info.renewal_state renewalState,
+        finance_due_order.is_extension isExtension
+        <if test="isCollection!=null and isCollection!='' and isCollection==100">
+            ,  finance_repay.loan_period loanPeriod
+        </if>
+        FROM
+        finance_due_order
+        left  join   (SELECT DISTINCT
+        a.userId
+        FROM
+        (
+        SELECT DISTINCT
+        customer_no userId
+        FROM
+        finance_pay_log
+        WHERE
+        loan_type IN ( 1, 2, 7 )
+        AND pay_status = 1
+        GROUP BY
+        customer_no
+        HAVING
+        count( 1 ) > 1 UNION
+        SELECT DISTINCT
+        o.user_id userId
+        FROM
+        finance_extension e
+        JOIN user_order o ON e.order_no = o.order_num
+        ) a) payLog on payLog.userId=finance_due_order.customer_no
+        <!--判定 展期-->
+        <if test="isCollection!=null and isCollection!='' and isCollection==100">
+        left   join   finance_repay  on   finance_repay.order_no=finance_due_order.order_no
+        </if>
+        where
+        1=1
+        <if test="isCollection==null or isCollection=='' ">
+            and finance_due_order.is_extension !='1'
+        </if>
+        <if test="isCollection!=null  and isCollection!=''   ">
+            and finance_due_order.id in
+            (
+            select max(id)
+            from finance_due_order
+            group by order_no
+            )
+
+        </if>
+
+
+        <!--应还款日期条件区间-->
+        <!--<if test="startDueDate!=null and  startDueDate!=''">
+            and date_sub(finance_due_order.due_start,interval 1 day) &gt;= #{startDueDate}
+        </if>
+        <if test="endDueDate!=null and  endDueDate!=''">
+            and date_sub(finance_due_order.due_start,interval 1 day) &lt;= #{endDueDate}
+        </if>-->
+
+        <!--应还款日期条件区间 2019/8/9 created by caideli-->
+        <if test="startDueDate!=null and  startDueDate!='' and endDueDate!=null and  endDueDate!=''">
+            and order_no IN (
+                SELECT
+                f1.order_no
+                FROM
+                finance_pay_log f1
+                WHERE
+                f1.repay_date = (
+                SELECT
+                max(f2.repay_date)
+                FROM
+                finance_pay_log f2
+                WHERE
+                f1.order_no = f2.order_no
+                )
+                AND order_no = f1.order_no
+                AND f1.repay_date &gt;= #{startDueDate}
+                AND f1.repay_date &lt;= #{endDueDate}
+                )
+        </if>
+
+        <!--实际还款日期条件区间  2019/8/9 created by caideli -->
+        <if test="startActualDate!=null and  startActualDate!='' and endActualDate!=null and  endActualDate!=''">
+            and order_no in (
+              select order_no from finance_pay_log
+              where loan_type in (3,4,5) and pay_status=1
+              and date_format(create_time,'%Y-%m-%d') &gt;= #{startActualDate}
+              and date_format(create_time,'%Y-%m-%d') &lt;= #{endActualDate}
+              )
+        </if>
+        <!--<if test="endActualDate!=null and  endActualDate!=''">
+        and finance_due_order.due_end &gt;= #{startActualDate}
+            and finance_due_order.due_end &lt;= #{endActualDate}
+        </if>-->
+
+
+        <if test="orderNo!=null and orderNo!='' ">
+            and order_no=#{orderNo}
+        </if>
+        <!--用户编号绑定模糊查询-->
+        <if test="userId!=null and userId!=''">
+            <bind name="_userId" value="'%' + userId + '%'"/>
+            and finance_due_order.customer_no like #{_userId}
+        </if>
+        <!--用户电话号码绑定模糊查询-->
+        <if test="phone!=null and  phone!=''">
+            <bind name="_phone" value="'%' + phone + '%'"/>
+            and finance_due_order.mobile like #{_phone}
+        </if>
+        <if test="finishedType!=null and  finishedType!=''  and finishedType!=0">
+            and finance_due_order.finished_type=#{finishedType}
+        </if>
+
+        <if test="isSettle!=null  and isSettle!='' and  isSettle!=0  ">
+            <if test="isSettle==1">
+                and finance_due_order.due_end!=0
+            </if>
+            <if test="isSettle==2">
+                and finance_due_order.due_end=0
+            </if>
+        </if>
+
+        <!-- 排序 -->
+        order by
+        <if test="loanStatus!=null and  loanStatus!=''  and loanStatus!=0   ">
+            <if test="loanStatus==1">
+                finance_due_order.due_days ,
+            </if>
+            <if test="loanStatus==2">
+                finance_due_order.due_end desc,
+            </if>
+
+        </if>
+        <if test="overDaysSort!=null and overDaysSort!='' and overDaysSort!=0  ">
+            <if test="overDaysSort==1">
+                finance_due_order.due_days,
+            </if>
+            <if test="overDaysSort==2">
+                finance_due_order.due_days desc,
+
+            </if>
+        </if>
+
+        <if test="isSettle!=null and  isSettle!=''  and isSettle!=0   ">
+            <if test="isSettle==1">
+                finance_due_order.due_end desc,
+            </if>
+            <if test="isSettle==2">
+                finance_due_order.due_days,
+            </if>
+
+        </if>
+
+
+        <if test="overDaysSort==null or overDaysSort=='' or overDaysSort==0  ">
+            <if test="isSettle==null or  isSettle==''  or isSettle==0   ">
+
+                finance_due_order.due_days,
+
+            </if>
+        </if>
+        <if test="loanAmountSort!=null and  loanAmountSort!=''">
+            <if test="loanAmountSort==1">finance_due_order.loan_amount,</if>
+            <if test="loanAmountSort==2">finance_due_order.loan_amount desc,</if>
+        </if>
+        finance_due_order.mobile
+
+
+    </select>
+
+    <update id="updateRepaymentByLoanNum" parameterType="com.cloud.order.model.FinanceRepayModel">
+        update finance_repay
+        <set>
+            <if test="actualAmount != null">
+                actual_amount = #{actualAmount,jdbcType=DECIMAL},
+            </if>
+            <if test="orderStatus != null">
+                order_status = #{orderStatus,jdbcType=TINYINT},
+            </if>
+            <if test="loanType != null">
+                loan_type = #{loanType,jdbcType=TINYINT},
+            </if>
+            <if test="payStatus != null">
+                pay_status = #{payStatus,jdbcType=TINYINT},
+            </if>
+        </set>
+        where loan_number = #{loanNumber,jdbcType=VARCHAR}
+    </update>
+
+    <insert id="saveRepaySnapshot" parameterType="com.cloud.order.model.FinanceRepaySnapshotModel"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into finance_repay_snapshot
+        (repay_date, customer_no,
+         name, mobile, loan_period,
+         loan_amount, pay_amount, bank_no,
+         order_status, order_no, create_time,
+         loan_number)
+        VALUES
+        (#{repayDate},#{customerNo},
+         #{name},#{mobile},#{loanPeriod},
+         #{loanAmount},#{payAmount},#{bankNo},
+         #{orderStatus},#{orderNo},now(),#{loanNumber})
+    </insert>
+
+    <select id="queryRepayByLoanNum" resultType="com.cloud.order.model.FinanceRepayModel"
+            parameterType="java.lang.String">
+
+        SELECT
+        finance_repay.repay_date repayDate,
+        finance_repay.customer_no customerNo,
+        finance_repay.`name`,
+        finance_repay.mobile,
+        finance_repay.loan_period loanPeriod,
+        finance_repay.loan_amount loanAmount,
+        finance_repay.pay_amount payAmount,
+        finance_repay.bank_no bankNo,
+        finance_repay.order_status ,
+        finance_repay.id,
+        finance_repay.order_no orderNo,
+        finance_repay.loan_number loanNumber,
+        finance_repay.actual_amount actualAmount,
+        finance_repay.pay_date payDate
+        FROM
+        finance_repay
+        where
+        finance_repay.order_status='3'
+
+    </select>
+    <!--首次逾期訂單插入-->
+    <insert id="insertLaterOrder">
+        INSERT INTO finance_due_order (
+        finance_due_order.order_no,
+        finance_due_order.customer_no,
+        finance_due_order.`name`,
+        finance_due_order.mobile,
+        finance_due_order.loan_amount,
+        finance_due_order.due_days,
+        finance_due_order.due_amount,
+        finance_due_order.due_start,
+        finance_due_order.is_extension,
+        finance_due_order.rate
+        ) SELECT
+        repay.order_no,
+        repay.customer_no,
+        repay.`name`,
+        repay.mobile,
+        loan.should_repay_amount,
+        1,
+        loan.should_repay_amount * penalty.rate,
+        date_add( repay.repay_date, INTERVAL 1 DAY ),
+        0,penalty.rate
+        FROM
+        finance_repay repay
+        JOIN user_loan loan ON repay.loan_number = loan.loan_number
+        JOIN product_loan_rate_type type ON loan.product_id = type.product_id
+        JOIN product_interest_penalty penalty ON penalty.id = type.rate_type_id
+        LEFT JOIN ( SELECT * FROM finance_extension WHERE id IN ( SELECT MAX( id ) FROM finance_extension GROUP BY order_no ) ) extension ON repay.order_no = extension.order_no
+        WHERE
+        penalty.is_penalty = '1'
+        AND
+        CASE
+
+        WHEN extension.extension_end IS NULL THEN
+        repay.repay_date ELSE extension.extension_end
+        END &lt;NOW( )
+        AND repay.order_no NOT IN ( SELECT order_no FROM finance_due_order WHERE is_extension != '1' )
+
+    </insert>
+
+    <!--跟新逾期表信息-->
+    <update id="updateLaterOrder">
+UPDATE finance_due_order due
+SET due_days = datediff( NOW( ), due_start ),
+due_amount = loan_amount * datediff( NOW( ), due_start ) * rate
+WHERE
+	due_end = '0000-00-00'
+
+
+    </update>
+    <!--跟新展期表信息-->
+    <update id="updateExtension">
+
+		update  finance_extension set extension_status='0'
+		where  extension_status= '1' and   date_add(extension_end,interval 1 day)&lt;now()
+
+
+	</update>
+
+    <!--修改借據信息-->
+    <update id="updateUserLoanDueInFo">
+
+UPDATE user_loan loan
+JOIN finance_repay repay ON loan.loan_number = repay.loan_number
+JOIN ( SELECT * FROM finance_due_order WHERE id IN ( SELECT Max( id ) FROM finance_due_order WHERE due_end = '0000-00-00' GROUP BY order_no ) ) due ON repay.order_no = due.order_no
+SET loan.loan_start_date = unix_timestamp( due.due_start ),
+loan.overdue_day = due.due_days,
+loan.late_charge = due.due_amount
+
+
+    </update>
+    <!--新增账户管理-->
+    <insert id="insertAccountManager" parameterType="Map">
+insert  into  finance_account_manager (
+finance_account_manager.account_name,
+finance_account_manager.loan_passageway,
+finance_account_manager.pay_passageway,
+finance_account_manager.amount,
+finance_account_manager.balance,
+finance_account_manager.create_time,
+finance_account_manager.is_delete,
+finance_account_manager.pay_order
+)
+values (
+#{accountName},
+#{loanPassageway},
+#{payPassageway},
+#{amount},
+#{amount},
+now(),
+0,
+#{payOrder}
+)
+ </insert>
+    <!--跟新账户管理-->
+    <update id="updateAccountManager" parameterType="Map">
+        <if test="id!=null">
+            update finance_account_manager
+            <set>
+                <if test="accountName!=null and accountName!=''">
+                    account_name=#{accountName},
+                </if>
+                <if test="loanPassageway!=null and loanPassageway!=''">
+                    loan_passageway=#{loanPassageway},
+                </if>
+                <if test="payPassageway!=null and payPassageway!=''">
+                    pay_passageway=#{payPassageway},
+                </if>
+                <if test="amount!=null and amount!=''">
+                    amount=#{amount},
+                </if>
+                <if test="balance!=null and balance!=''">
+                    balance = #{balance},
+                </if>
+                <if test="isDelete!=null and isDelete!=''">
+                    is_delete=#{isDelete},
+                </if>
+                <if test="station!=null ">
+                    station=#{station},
+                </if>
+                <if test="payOrder!=null and payOrder!=''">
+                    pay_order=#{payOrder},
+                </if>
+            </set>
+            where
+            id=#{id}
+
+        </if>
+
+    </update>
+
+    <!--通过支付顺序 查找-->
+    <select id="selectAccountByPayOrder" resultType="int">
+        select count(0) num
+        from finance_account_manager
+        WHERE
+        <if test="payOrder==null or payOrder==''">
+            1=2
+        </if>
+        <if test="payOrder!=null and payOrder!=''">
+            pay_order = #{payOrder} and station = 1 and is_delete = 0
+        </if>
+    </select>
+    <!--查询所有的账户名称-->
+    <select id="selectAllAccountName" resultType="String">
+        select distinct account_name
+        from finance_account_manager
+        where is_delete = 0
+    </select>
+    <!--查询账户列表-->
+    <select id="selectAccountList" resultType="com.cloud.order.model.FinanceAccountManagerModel" parameterType="Map">
+        SELECT
+        finance_account_manager.id,
+        finance_account_manager.account_name accountName,
+        finance_account_manager.loan_passageway loanPassageway,
+        finance_account_manager.pay_passageway payPassageway,
+        finance_account_manager.amount,
+        finance_account_manager.create_time createTime,
+        finance_account_manager.is_delete isDelete,
+        finance_account_manager.station,
+        finance_account_manager.pay_order payOrder
+        FROM
+        finance_account_manager
+        where
+        is_delete=0
+        <if test="name!=null and  name!=''">
+            and account_name=#{name}
+        </if>
+        order by pay_order
+    </select>
+
+
+    <select id="getLoanAccountInfo" resultType="com.cloud.order.model.FinanceAccountManagerModel">
+        SELECT id, balance,amount  FROM finance_account_manager WHERE loan_passageway = 'razorpay' AND is_delete = 0 AND station = 1
+    </select>
+
+    <select id="queryRepaymentByOrderNo" resultType="com.cloud.order.model.FinanceRepayModel">
+
+            select  *   from   finance_repay
+        where order_no=#{orderNo}
+
+    </select>
+
+    <select id="getOneFinanceRepayByParams" resultType="com.cloud.order.model.FinanceRepayModel">
+
+        select  *   from   finance_repay
+        where 1=1
+        <if test="orderNo!=null and  orderNo!=''">
+            and order_no=#{orderNo}
+        </if>
+        <if test="orderStatus!=nul">
+            and order_status=#{orderStatus}
+        </if>
+        limit 1
+    </select>
+    <select id="queryReportCollectionManModel"  resultType="com.cloud.order.model.ReportCollectionManModel" parameterType="com.cloud.order.model.DateParam">
+
+      select  *  from    report_collection_man
+      <where>
+      <if test="startDate!=null and  startDate!=''">
+       and  report_date>=#{startDate}
+       </if>
+       <if test="endDate!=null and  endDate!=''">
+          and   report_date<![CDATA[ < ]]>=#{endDate}
+
+       </if>
+       <if test="collectorIds!=null and  collectorIds!=''">
+           and  collector_id in (${collectorIds})
+       </if>
+      </where>
+    </select>
+
+</mapper>

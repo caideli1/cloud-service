@@ -1,0 +1,1327 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.OrderDao">
+
+
+    <select id="findAllOrder" resultType="OrderModel">
+		select * from t_order limit #{start}, #{length}
+	</select>
+
+    <select id="count" resultType="int">
+	
+	select count(1) from t_order
+	</select>
+
+    <!--通用查询首部 creat by ZhuJingTao-->
+    <sql id="select">
+        SELECT
+         `user_order`.id AS orderId,
+         `user_order`.order_num AS orderNum,
+     CONCAT('MN', `user_order`.order_num,'PD')  AS applyNum,
+        `user_order`.user_id AS userId,
+        `user_order`.user_name AS userName,
+        `user_order`.create_time AS createTime
+                ,
+        `user_order`.user_phone   userPhone
+
+    </sql>
+
+    <!-- 通用查询条件 creat by ZhuJingTao-->
+    <sql id="where">
+
+        where
+        1=1
+
+        <!--判定如果传入姓名参数则增加模糊查询-->
+        <if test=" name != null and name != ''">
+            <bind name="_name" value="'%' + name + '%'"/>
+            and `user_order`.user_name like #{_name}
+        </if>
+        <!--判定如果传入用户编号参数则增加模糊查询-->
+        <if test=" userNo != null and userNo != ''">
+            <bind name="_userNo" value="'%' + userNo + '%'"/>
+            and `user_order`.user_id like #{_userNo}
+        </if>
+        <!--判定如果传入电话参数则增加模糊查询-->
+        <if test=" phone != null and phone != ''">
+            <bind name="_userPhone" value="'%' + phone + '%'"/>
+            and `user_order`.user_phone like #{_userPhone}
+        </if>
+        <!--判定如果传入申请号参数则增加模糊查询-->
+        <if test=" applyNum != null and applyNum != ''">
+            <bind name="_applyNum" value="'%' + applyNum + '%'"/>
+            and  CONCAT('MN', `user_order`.order_num,'PD')  like #{_applyNum}
+        </if>
+        <!--判定如果传入开始时间参数-->
+        <if test="startTime != null and startTime != ''">
+            and `user_order`.create_time &gt;= #{startTime}
+        </if>
+        <!--判定如果传入结束时间参数-->
+        <if test="endTime != null and endTime != ''">
+            and DATE(`user_order`.create_time) &lt;= #{endTime}
+        </if>
+    </sql>
+
+    <select id="queryNowOrderAudit" parameterType="Map" resultType="com.cloud.order.model.ReportOrderAuditParam">
+
+        select DATE_FORMAT(c.create_time,'%Y-%m-%d') reportDate,
+        c.auditor_name auditorName,c.node,c.result,sum(o.loan_amount) amount,count(1) num
+        from
+        order_check_log c
+        join user_order o
+        on c.order_id=o.id
+        join sys_user s
+        on c.auditor_name=s.username
+        where node in (20,21,40)
+        <if test="auditorId!=null and auditorId!='' and auditorId!=0 ">
+            and s.id=#{auditorId}
+        </if>
+        and DATE_FORMAT(c.create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d')
+        GROUP BY c.node,auditor_name,DATE_FORMAT(c.create_time,'%Y-%m-%d'),result
+
+    </select>
+
+    <select id="appQueryCurrentOrderInfo" resultType="com.cloud.order.model.resp.AppMyCurrentLoanInfoRes">
+		SELECT
+			ul.loan_number,
+			ul.loan_status,
+			ul.borrow_amount,
+			ifnull( max(fe.extension_end), ul.loan_end_date ) repay_date
+		FROM
+			user_loan ul
+			LEFT JOIN finance_extension fe ON fe.loan_number = ul.loan_number
+			AND fe.extension_status = 1
+		WHERE
+			ul.id = (
+			SELECT
+				max( id )
+			FROM
+				user_loan
+			WHERE
+			user_id = #{userId}
+			)
+    </select>
+
+    <select id="getSystemHistoryReport" parameterType="Map" resultType="com.cloud.order.model.ReportOrderAuditModel">
+        SELECT
+        report_date reportDate,
+        final_audit_count finalAuditCount,
+        final_pass_rate finalPassRate,
+        concat(final_pass_rate,'%') finalPassRateStr,
+        first_audit_count firstAuditCount,
+        first_pass_rate firstPassRate,
+        concat(first_pass_rate,'%') firstPassRateStr,
+        auditor_name auditorName,
+        auditor_id auditorId,
+        pass_amount passAmount,
+        apply_amount applyAmount
+        FROM
+        report_order_audit
+        where
+        auditor_name='sum'
+
+        <if test="beginDate!=null  and  beginDate!=''">
+            and report_date>=#{beginDate}
+        </if>
+        <if test="endDate!=null  and  endDate!=''">
+            and report_date&lt;=#{endDate}
+        </if>
+
+        GROUP BY report_date
+        order by report_date desc
+    </select>
+    <!--贷款订单列表测试查询 creat by ZhuJingTao-->
+    <select id="queryAllOrderList" resultType="com.cloud.order.model.OrderTableModel" parameterType="Map">
+        <include refid="select"/>
+        ,
+        `user_order`.check_status status
+
+        <if test="status!=null  and status!=''  ">
+            ,
+            assgin.type
+        </if>
+
+
+        FROM
+        `user_order`
+        <if test="status!=null  and status!=''  ">
+            left join `order_assign_log` assgin on `user_order`.id=assgin.order_id and assgin.id in (select Max(id) from
+            `order_assign_log` GROUP BY order_id )
+        </if>
+
+        <include refid="where"/>
+        and `user_order`.check_status !=1
+        <if test="status!=null  and status!=''  ">
+            <!-- 判定是否选择全部拒绝状态-->
+            <if test="status==8">
+                and (`user_order`.check_status='2' or `user_order`.check_status='4' or `user_order`.check_status='6' )
+            </if>
+            <if test="status==0">
+                and ( (`user_order`.check_status= 3 and assgin.type = 1)
+                or ( `user_order`.check_status= 5 and assgin.type = 2)
+                )
+            </if>
+            <!-- 放入常量池中的订单，在页面也叫审批通过，和通过的区别是前者审批通过未放款，后者审批通过并且放款了，由于状态8被占用，这里用80代替 -->
+            <if test="status==80">
+                and (`user_order`.check_status='8')
+            </if>
+            <!--选择审核状态-->
+            <if test="status!=8 and status!=0 and status!=80">
+                <if test="status==3">
+                    <!--判定初审未审核-->
+                    AND (assgin.type is null or assgin.type!= 1)
+                </if>
+                <if test="status==5">
+                    AND (assgin.type is null or assgin.type !=2)
+                </if>
+
+                and `user_order`.check_status=#{status}
+            </if>
+
+        </if>
+        <if test="approvalTime!=null and approvalTime!=0">
+            <!-- 最近十分钟 -->
+            <if test="approvalTime==1">
+
+
+                and
+                `user_order`.create_time
+
+                &gt;=DATE_SUB(NOW(),INTERVAL 10 MINUTE)
+            </if>
+            <!-- 最近半小时  -->
+            <if test="approvalTime==2">
+                and
+                `user_order`.create_time
+                &gt;=DATE_SUB(NOW(),INTERVAL 30 MINUTE)
+            </if>
+            <!-- 最近一小时 -->
+            <if test="approvalTime==3">
+
+                and
+                `user_order`.create_time
+                &gt;=DATE_SUB(NOW(),INTERVAL 1 HOUR)
+            </if>
+            <!-- 最近一天  -->
+            <if test="approvalTime==4">
+                and
+                `user_order`.create_time
+                &gt;=DATE_SUB(NOW(),INTERVAL 1 DAY)
+            </if>
+        </if>
+        order by `user_order`.create_time
+        DESC
+
+    </select>
+
+    <!--放款池列表 created by caideli -->
+    <select id="queryLendingPoolOrderList" resultType="com.cloud.order.model.OrderTableModel" parameterType="Map">
+        select p.term,u.*
+        from `user_order` u,product_loan p
+        where u.product_id = p.id and u.check_status = 8 and u.is_stock = 0
+        <if test="applyNum != null and applyNum != ''">
+            and instr(CONCAT('MN', u.order_num,'PD'),#{applyNum}) &gt; 0
+        </if>
+        <if test="userPhone != null and userPhone != ''">
+            and instr(u.user_phone,#{userPhone}) &gt; 0
+        </if>
+        <if test="term != null">
+            and p.term = #{term}
+        </if>
+        <if test="loanAmount != null">
+            and u.loan_amount = #{loanAmount}
+        </if>
+        <!--判定如果传入审核开始时间参数-->
+        <if test="startFinalAuditTime != null and startFinalAuditTime != ''">
+            and DATE_FORMAT(u.final_audit_time,"%Y-%m-%d") &gt;= #{startFinalAuditTime}
+        </if>
+        <!--判定如果传入审核结束时间参数-->
+        <if test="endFinalAuditTime != null and endFinalAuditTime != ''">
+            and DATE_FORMAT(u.final_audit_time,"%Y-%m-%d") &lt;= #{endFinalAuditTime}
+        </if>
+    </select>
+
+
+    <!--我的订单页面查询 creat by ZhuJingTao-->
+    <select id="queryMyOrders" resultType="com.cloud.order.model.OrderTableModel" parameterType="Map">
+
+        <include refid="select"/>
+        ,`user_order`.check_status AS status
+        FROM `user_order`
+        join order_assign_log alog on alog.order_id=`user_order`.id and alog.auditor_name=#{currentUser}
+        <include refid="where"/>
+        <if test="currentUser==null">
+            and 1=2
+        </if>
+        and `user_order`.check_status in ('3','5')
+
+        and alog.id in (select MAX(id) from order_assign_log
+        GROUP BY order_id
+        )
+        and alog.auditor_name=#{currentUser}
+
+
+        and `user_order`.check_status&gt;2
+
+        and
+        case when `user_order`.check_status='3' then
+        alog.type=1
+        when `user_order`.check_status='5' then alog.type=2 end
+
+        and `user_order`.check_status&gt;2
+
+
+        <!--判定状态信息-->
+        <if test="status!=null  and   status!=0  ">
+            <!-- 判定是否为人工初审状态-->
+            <if test="status==1">
+
+                and `user_order`.check_status='3'
+
+            </if>
+            <!--判定是否为人工终审状态-->
+            <if test="status==2">
+
+                and `user_order`.check_status='5'
+
+            </if>
+            <if test="status!=1 and status!=2">
+                and 1=2
+            </if>
+
+
+        </if>
+        order by `user_order`.create_time
+
+
+    </select>
+    <!--待领取订单查询 creat by ZhuJingTao-->
+    <select id="queryUnclaimedOrder" resultType="com.cloud.order.model.OrderTableModel" parameterType="Map">
+        <include refid="select"/>
+        ,`user_order`.check_status AS status
+
+        FROM
+        `user_order`
+        <include refid="where"/>
+        and `user_order`.id not in ( select order_id from order_assign_log)
+        and `user_order`.check_status&gt; 2
+        order by `user_order`.create_time
+    </select>
+
+
+    <!--查找待初审订单 creat by ZhuJingTao-->
+    <select id="queryFirstCheckOrders" resultType="com.cloud.order.model.OrderTableModel" parameterType="Map">
+        <include refid="select"/>
+        , `user_order`.check_status AS status
+        ,case when `user_order`.id NOT IN (select distinct order_id from order_assign_log ) then '0'
+        when `user_order`.id IN (select distinct order_id from order_assign_log ) then '1' end
+        distributionStatus,
+        assign.auditor_name assessorName
+
+        FROM
+        `user_order`
+        LEFT JOIN ( SELECT * FROM order_assign_log
+        WHERE id IN
+        ( SELECT MAX( id ) FROM order_assign_log WHERE type = '1' GROUP BY order_id ) )
+        assign ON assign.order_id = `user_order`.id
+
+        <include refid="where"/>
+        and `user_order`.check_status='3'
+        <if test="managerId !=null and managerId!='' ">
+            and assign.auditor_name=#{managerId}
+        </if>
+
+        <!--判定分配状态-->
+        <if test="distributionStatus!=null and  distributionStatus!=''">
+            <!--判定 是否有分配记录-->
+            <if test="distributionStatus==0">
+                and `user_order`.id NOT IN (select distinct order_id from order_assign_log )
+            </if>
+            <if test="distributionStatus==1">
+                and `user_order`.id IN (select distinct order_id from order_assign_log )
+            </if>
+
+        </if>
+
+        order by `user_order`.create_time
+
+    </select>
+
+    <!--查找待终审订单-->
+    <select id="queryEndCheckOrders" resultType="com.cloud.order.model.OrderTableModel" parameterType="Map">
+        <include refid="select"/>
+        , `user_order`.check_status AS status
+        , case when `user_order`.id NOT IN (select distinct order_id from order_assign_log where type='2') then '0'
+        when `user_order`.id IN (select distinct order_id from order_assign_log where type='2' ) then '1'
+        end
+        distributionStatus,
+        assign.auditor_name assessorName
+
+        FROM
+        `user_order`
+        LEFT JOIN ( SELECT * FROM order_assign_log
+        WHERE id IN
+        ( SELECT MAX( id ) FROM order_assign_log WHERE type = '2' GROUP BY order_id ) )
+        assign ON assign.order_id = `user_order`.id
+
+        <include refid="where"/>
+        and `user_order`.check_status='5'
+
+        <if test="managerId !=null and managerId!='' ">
+            and assign.auditor_name=#{managerId}
+        </if>
+        <!--判定分配状态-->
+        <if test="distributionStatus!=null and  distributionStatus!=''">
+            <!--判定 是否有分配记录-->
+            <if test="distributionStatus==0">
+                and `user_order`.id NOT IN (select distinct order_id from order_assign_log where type='2')
+            </if>
+            <if test="distributionStatus==1">
+                and `user_order`.id IN (select distinct order_id from order_assign_log where type='2' )
+            </if>
+
+        </if>
+
+
+        order by `user_order`.create_time
+
+
+    </select>
+
+    <select id="findIdByName" resultType="int">
+		SELECT id from sys_user WHERE username = #{username}
+	</select>
+
+    <select id="findNameById" resultType="String">
+		SELECT username FROM sys_user where id = #{id}
+	</select>
+
+    <select id="getAuditor" resultType="Map" parameterType="int">
+        SELECT
+        DISTINCT(a.id),
+        a.username
+        FROM
+        sys_user a
+        LEFT JOIN sys_user_permission_relation b ON a.id = b.sys_user_id
+        WHERE
+        1=1
+        <if test="type == 1">
+            and b.permission_id = 60
+        </if>
+        <if test="type == 2">
+            and b.permission_id = 61
+        </if>
+        <if test="type == 3">
+            and b.permission_id in (60, 61)
+        </if>
+        AND a.enabled =1
+        ORDER BY id
+    </select>
+
+    <insert id="insertOrderCheckLog">
+		INSERT INTO `order_check_log`
+        ( `order_id`,
+         `auditor_name`,
+          `status`,
+          `result`,
+          `reason`,
+          `create_time`,
+          `node`,
+          `is_warning`,
+          `tag_ids`)
+        VALUES
+         ( #{orderId},
+           #{auditorName},
+           #{status},
+           #{result},
+           #{reason},
+           now(),
+           #{node},
+           #{isWarning},
+           #{tagIds})
+    </insert>
+
+    <update id="updateOrderStatusById">
+		UPDATE `user_order`
+		SET
+		check_status = #{checkStatus} ,
+		update_time = NOW()
+		WHERE id = #{orderId}
+	</update>
+
+    <select id="getTags" resultType="Map">
+        SELECT id,descrption,type FROM check_tag order by type,id
+    </select>
+
+    <select id="getOrderCheckLogByOrderId" resultType="OrderCheckLogModel">
+        SELECT * FROM order_check_log WHERE order_id = #{orderId}
+    </select>
+
+    <select id="queryUserOrderById" resultType="com.cloud.order.model.OrderTableModel">
+      SELECT * FROM  user_order where id = #{id}
+    </select>
+
+    <!--通过-->
+    <select id="getOrderById" resultType="OrderProcessModel">
+        SELECT
+          a.id,
+          a.order_num AS orderNum,
+          CONCAT('MN', a.order_num,'PD')AS applyNum,
+          a.product_id AS productId,
+          b.`name` AS productName,
+          a.loan_amount AS loanAmount,
+          a.check_status AS checkStatus,
+          a.user_id AS userId,
+          a.create_time AS createTime,
+          c.renewal_state as  renewalState
+        FROM
+          `user_order` AS a LEFT JOIN product_loan AS b ON a.product_id=b.id
+          join   user_info_history as c  on  a.order_num=c.order_no
+        WHERE a.id= #{orderId}
+    </select>
+
+    <!--获取用户信息 creat by ZhuJingTao-->
+    <select id="getUserInfo" resultType="com.cloud.order.model.UserInfoParam">
+        SELECT
+          b.user_name AS name ,
+          a.order_no AS orderNo,
+          a.marriage_status AS marriageStatus ,
+          a. is_student AS studentStatus,
+          a.email,
+          a.mobile,
+          a.sex,
+          a.birthday,
+          a.facebook_account AS facebookAccount,
+          a.skype_account AS skypeAccount,
+          a.whatsapp_account AS whatsappAccount,
+          a.religion,
+          a.postcode ,
+          a.loan_purpose AS loanPurpose,
+          a.match_pan  `match`,
+          a.payDays ,
+          a.is_identified_pan AS isIdentifyPancard,
+          a.birthday_pan  AS birthdayPancard,
+          a.first_contact_id AS firstContactId,
+          a.second_contact_id AS secondContactId
+        FROM
+            user_info_history AS a
+            JOIN user_order AS b  ON  a.order_no = b.order_num
+        WHERE b.id = #{orderId}
+    </select>
+
+    <select id="getAadhaarAuthByOrderNo" resultType="com.cloud.order.model.AadhaarAuth">
+        SELECT
+            a.aadhaar_account AS aadhaarAccount,
+            a.birthday AS aadhaarBirthday,
+            a.sex aadhaarSex,
+            a.aadhaar_url_back AS aadhaarBack,
+            a.aadhaar_url_front AS aadhaarFront,
+            a.aadhaar_house AS aadhaarHouse,
+            a.aadhaar_street AS aadhaarStreet,
+            a.aadhaar_loc AS aadhaarLoc,
+            a.aadhaar_vtc AS aadhaarVtc,
+            a.aadhaar_po AS aadhaarPo,
+            a.aadhaar_dist AS aadhaarDist,
+            a.aadhaar_subdist AS aadhaarSubdist,
+            a.aadhaar_state AS aadhaarState,
+           CONCAT(a.aadhaar_house,',',a.aadhaar_street , ',',a.aadhaar_loc)   AS  aadhaarAddressDetails
+        FROM
+            user_info_history AS a
+        WHERE
+            a.order_no = #{orderNo}
+    </select>
+    <select id="getPanCardAuthByOrderNo" resultType="com.cloud.order.model.PanCardAuth">
+        SELECT
+            a.card_back_url_pan AS panCardBack,
+            a.card_front_url_pan AS panCardfront,
+            a.holds_full_name_pan AS pancardOwner,
+            a.fathers_name_pan AS fatherName,
+            a.permanent_no_pan AS pancardNo,
+            a.is_identified_pan AS isIdentify
+        FROM
+            user_info_history AS a
+        WHERE
+            a.order_no = #{orderNo}
+    </select>
+
+    <!--获取账户信息  creat by ZhuJingTao-->
+    <select id="getBankInfo" resultType="com.cloud.model.user.UserBankCard">
+        SELECT
+            bank.account_name AS accountName ,
+			bank.ifsc_code AS ifscCode,
+			bank.bank_account AS bankAccount,
+			bank.bank_name AS bankName,
+			bank.`status`,
+			bank.verify_return_name AS verifyReturnName
+        FROM
+			user_bank_card AS bank JOIN user_info_history AS history ON history.bank_id=bank.id
+		WHERE
+            history.order_no=#{orderNo}
+    </select>
+
+    <!--获取图片信息 creat by ZhuJingTao-->
+    <select id="getImgInfoByOrderId" resultType="com.cloud.order.model.ImgInfo">
+        SELECT
+            history.face_img AS faceImg,
+            IFNULL(`order`.signature_url  ,'') AS signatureUrl
+        FROM
+            user_info_history AS history left join user_order AS `order` ON history.order_no = `order`.order_num
+        where
+            `order`.id = #{orderId}
+    </select>
+
+    <!--获取公司信息及家庭地址 creat by ZhuJingTao-->
+    <select id="getWorkInfoByOrderNo" resultType="com.cloud.order.model.WorkAddressInfo">
+        SELECT
+            userInfo.profession,
+            userInfo.position,
+            userInfo.company_name AS companyName,
+            userInfo.education_degree AS educationDegree,
+            userInfo.school,
+            userInfo.work_year AS workYear,
+            userInfo.payDays,
+            salary.salary,
+            address.state AS homeState,
+            address.district AS homeDistrict,
+            address.county AS homeCounty,
+            address.town AS homeTown,
+            address.address_detail AS homeAddressDetail,
+            cAddress.state AS companyState,
+            cAddress.district AS companyDistrict,
+            cAddress.county AS companyCounty,
+            cAddress.town AS companyTown,
+            cAddress.address_detail AS companyAddressDetail,
+		    cAddress.company_phone AS companyMobile
+        FROM
+            user_info_history AS userInfo
+            LEFT JOIN user_address AS address ON userInfo.home_address_id = address.id
+            LEFT JOIN user_address AS cAddress ON userInfo.company_address_id = cAddress.id
+            LEFT JOIN user_salary AS salary ON salary.id = userInfo.salary_id
+        WHERE
+            userInfo.order_no=#{orderNo}
+
+    </select>
+
+
+    <select id="getConformFile" resultType="com.cloud.order.model.ConformFile">
+       SELECT
+          userInfo.bank_statement_url AS  bankStatementUrl,
+          userInfo.work_card AS workCard
+       FROM
+          user_info_history  userInfo
+       WHERE
+          userInfo.order_no = #{orderNo}
+    </select>
+    <!--获取待终审待分配数量 creat by ZhuJingTao-->
+    <select id="getAllocatedOrderCount" resultType="int">
+SELECT
+	count( 1 ) c
+FROM
+	`user_order`
+WHERE
+	check_status = '5'
+	AND id NOT IN ( SELECT DISTINCT order_id FROM order_assign_log where  type='2')
+
+    </select>
+
+    <select id="getReportOrderAudit" parameterType="Map" resultType="com.cloud.order.model.ReportOrderAuditModel">
+        SELECT
+        report_date reportDate,
+        final_audit_count finalAuditCount,
+        final_pass_rate finalPassRate,
+        concat(final_pass_rate,'%') finalPassRateStr,
+        first_audit_count firstAuditCount,
+        first_pass_rate firstPassRate,
+        concat(first_pass_rate,'%') firstPassRateStr,
+        auditor_name auditorName,
+        auditor_id auditorId,
+        pass_amount passAmount,
+        apply_amount applyAmount
+        FROM
+        report_order_audit
+
+        where
+        auditor_name !='sum'
+        <if test="beginDate!=null and beginDate!='' ">
+            and report_date>=#{beginDate}
+        </if>
+        <if test="endDate!=null and endDate!='' ">
+            and report_date&lt;=#{endDate}
+        </if>
+        <if test="auditorName!=null and auditorName!=''">
+            and auditor_name=#{auditorName}
+        </if>
+        <if test="auditorId!=null and auditorId!=''">
+            and auditor_id=#{auditorId}
+        </if>
+
+
+        order by report_date desc
+
+    </select>
+
+
+    <select id="getSystemCount" parameterType="Map" resultType="com.cloud.order.model.SystemCountModel">
+        SELECT DATE_FORMAT(a.create_time,'%Y-%m-%d') createDate,count(1) firstSum,
+        (SELECT count(1) from order_check_log where node = '20' and result = 1 and
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(a.create_time,'%Y-%m-%d')) firstPassedSum,
+        (SELECT count(1) from order_check_log where node = '21' and
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(a.create_time,'%Y-%m-%d')) finalSum,
+        (SELECT count(1) from order_check_log where node = '21' and result = 1 and
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(a.create_time,'%Y-%m-%d'))finalPassedSum,
+        (SELECT sum(b.loan_amount) FROM user_order b LEFT JOIN order_check_log c on b.id=c.order_id where c.node = '20'
+        and DATE_FORMAT(c.create_time,'%Y-%m-%d')=DATE_FORMAT(a.create_time,'%Y-%m-%d') ) loanAmount,
+        (SELECT sum(b.loan_amount) FROM user_order b LEFT JOIN order_check_log c on b.id=c.order_id where c.node = '21'
+        and c.result =1 and DATE_FORMAT(c.create_time,'%Y-%m-%d')=DATE_FORMAT(a.create_time,'%Y-%m-%d') ) finalAmount
+        from order_check_log a where a.node = '20'
+        <if test="beginDate != null and beginDate != ''">
+            and DATE_FORMAT(a.create_time,'%Y-%m-%d') >= #{beginDate}
+        </if>
+        <if test="endDate != null and endDate != '' ">
+            and DATE_FORMAT(a.create_time,'%Y-%m-%d') &lt;= #{endDate}
+        </if>
+        group by DATE_FORMAT(a.create_time,'%Y-%m-%d')
+        ORDER BY a.create_time desc
+    </select>
+
+    <select id="getPersonCount" parameterType="Map" resultType="com.cloud.order.model.PersonCountModel">
+        SELECT
+        a.id userId, a.username auditorName,
+        (select count(1) firstSum from order_check_log WHERE node = '20' AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d') AND auditor_name=a.username ) firstSum,
+        (SELECT count(1) FROM order_check_log WHERE node = '20' AND result = 1 AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d') AND auditor_name=a.username ) firstPassedSum,
+        (SELECT count(1) FROM order_check_log WHERE node = '21' AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d') AND auditor_name=a.username ) finalSum,
+        (SELECT count(1) FROM order_check_log WHERE node = '21' AND result = 1 AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d') AND auditor_name=a.username ) finalPassedSum,
+        (SELECT ifnull(sum(b.loan_amount),0) FROM user_order b LEFT JOIN order_check_log c on b.id=c.order_id WHERE
+        c.node = '20' AND DATE_FORMAT(c.create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d') AND c.auditor_name =
+        a.username) loanAmount,
+        (SELECT ifnull(sum(b.loan_amount),0) FROM user_order b LEFT JOIN order_check_log c on b.id=c.order_id WHERE
+        c.node = '21' AND c.result=1 AND DATE_FORMAT(c.create_time,'%Y-%m-%d')=DATE_FORMAT(now(),'%Y-%m-%d') AND
+        c.auditor_name = a.username) finalAmount
+        FROM sys_user a LEFT JOIN sys_user_permission_relation b ON a.id=b.sys_user_id
+        LEFT JOIN sys_permission c ON b.permission_id=c.id
+        WHERE c.permission IN ('audit:primary','audit:high')
+        <if test="auditorName != null and auditorName != ''">
+            AND a.username = #{auditorName}
+        </if>
+        GROUP BY a.username
+        ORDER BY a.username desc
+    </select>
+
+    <select id="getPersonCountDetail" parameterType="Map" resultType="com.cloud.order.model.PersonCountDetailModel">
+        SELECT DATE_FORMAT(a.create_time,'%Y-%m-%d') createDate,
+        a.auditor_name auditorName,
+        (SELECT COUNT(1) FROM order_check_log WHERE node = '20' AND auditor_name=a.auditor_name AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')= DATE_FORMAT(a.create_time,'%Y-%m-%d') ) firstSum,
+        (SELECT COUNT(1) FROM order_check_log WHERE node = '20' AND result = '1' AND auditor_name=a.auditor_name AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')= DATE_FORMAT(a.create_time,'%Y-%m-%d') )firstPassedSum,
+        (SELECT COUNT(1) FROM order_check_log WHERE node = '21' AND auditor_name=a.auditor_name AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')= DATE_FORMAT(a.create_time,'%Y-%m-%d'))finalSum,
+        (SELECT COUNT(1) FROM order_check_log WHERE node = '21' AND result = '1' AND auditor_name=a.auditor_name AND
+        DATE_FORMAT(create_time,'%Y-%m-%d')= DATE_FORMAT(a.create_time,'%Y-%m-%d'))finalPassedSum
+        FROM order_check_log a WHERE 1=1
+        <if test="auditorName != null and auditorName != ''">
+            AND a.auditor_name= #{auditorName}
+        </if>
+        <if test="beginDate != null and beginDate != ''">
+            and DATE_FORMAT(a.create_time,'%Y-%m-%d') >= #{beginDate}
+        </if>
+        <if test="endDate != null and endDate != '' ">
+            and DATE_FORMAT(a.create_time,'%Y-%m-%d') &lt;= #{endDate}
+        </if>
+        GROUP BY DATE_FORMAT(a.create_time,'%Y-%m-%d')
+        ORDER BY DATE_FORMAT(a.create_time,'%Y-%m-%d') desc
+    </select>
+
+
+    <insert id="insertOrderAssignLogUseList" parameterType="List">
+        insert into order_assign_log(
+        order_id,
+        dispatcher_name,
+        auditor_name,
+        create_time,
+        `type`
+        )values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.orderId},
+            #{item.dispatcherName},
+            #{item.auditorName},
+            now(),
+            #{item.type})
+        </foreach>
+    </insert>
+
+    <update id="updateUserOrderUseList" parameterType="List">
+        update user_order
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="manager_id = case " suffix="end ,">
+                <foreach collection="list" item="item" index="index">
+                    when id = #{item.orderId} then #{item.managerId}
+                </foreach>
+            </trim>
+            <trim prefix="auditor_id = case" suffix="end ,">
+                <foreach collection="list" item="item" index="index">
+                    when id = #{item.orderId} then #{item.auditorId}
+                </foreach>
+            </trim>
+        </trim>
+        where id in
+        <foreach collection="list" item="item" index="index" separator="," open="(" close=")">
+            #{item.orderId}
+        </foreach>
+    </update>
+
+    <select id="getOperation" resultType="int">
+select count(1) from order_assign_log where auditor_name = #{name}
+and id = (select max(id) from order_assign_log
+where order_id = #{orderId} and type =(select case when check_status = 3 then 1
+  when check_status = 5 then 2 else 0 end from user_order
+where id = #{orderId} ) group by order_id,type )
+    </select>
+    <select id="getUserOrderByOrderNum" resultType="com.cloud.model.appUser.AppUserOrderInfo">
+        SELECT *
+        FROM  user_order
+        WHERE order_num = #{orderNum}
+    </select>
+
+    <select id="getOrderCountInSameCompanyName" resultType="int">
+		SELECT
+			COUNT( DISTINCT uo.user_id )
+		FROM
+			user_order uo
+			JOIN user_info_history uih ON uo.order_num = uih.order_no
+			JOIN ( SELECT company_name FROM user_info_history WHERE order_no = #{orderNo} ) tmp ON tmp.company_name = uih.company_name
+		WHERE
+			uih.company_name NOT IN ( SELECT NAME FROM risk_india_area )
+    </select>
+
+    <select id="getOrderCountInSameCompanyPhone" resultType="int">
+		SELECT
+			count( DISTINCT ord.user_id )
+		FROM
+			user_info_history his
+			JOIN user_address addr ON his.company_address_id = addr.id
+			JOIN user_order ord ON his.order_no = ord.order_num
+		WHERE
+			addr.company_phone IN (
+			SELECT
+				addr.company_phone
+			FROM
+				user_info_history his
+				JOIN user_address addr ON his.company_address_id = addr.id
+			WHERE
+				his.order_no = #{orderNum}
+			)
+
+    </select>
+
+    <select id="getUserOrderByUserId" resultType="com.cloud.model.appUser.AppUserOrderInfo">
+        SELECT *
+        FROM  user_order
+        WHERE user_id = #{userId}
+    </select>
+
+
+    <!-- kudos -->
+    <select id="queryUserInformation" resultType="com.cloud.order.model.LoanRequestEntity">
+		SELECT
+			b.aadhaar_account borrowerAdhaar,
+			b.birthday borrowerDob,
+			b.email borrowerEmailId,
+			b.first_name BorrowerFName,
+			b.loan_purpose borrowerLoanPurpose,
+			d.permanent_no borrowerPanCard,
+			b.cell_phone borrowerPhone,
+			b.sex borrowerSex,
+			e.borrow_amount loanAmount,
+			e.loan_money_amount loanDisbAmount,
+			c.term loanTenure,
+			a.id partnerLoanid,
+			a.user_id partnerClientid,
+			a.check_status partnerStatus,
+			a.order_num orderNum,
+			e.loan_start_date loanStartDate,
+			e.loan_end_date loanEndDate,
+			e.real_closing_date realClosingDate
+		FROM
+			user_order a,
+			user_info b,
+			product_loan c,
+			user_pan_card d,
+			user_loan e 
+		WHERE
+			a.user_id = b.id 
+			AND a.product_id = c.id 
+			AND b.id = d.user_id 
+			AND a.user_id = e.user_id 
+			AND a.order_num = #{orderNo}
+			LIMIT 1
+	</select>
+
+    <!-- kudos cibil api  -->
+    <select id="queryCibilInformation" resultType="com.cloud.order.model.LoanCIBILEntity">
+		SELECT
+			b.first_name BorrowerFName,
+			b.birthday borrowerDOB,
+			b.sex borrowerGender,
+			b.email borrowerEmail,
+			c.company_name borrowerCompanyName,
+			e.permanent_no idnumber,
+			b.cell_phone borrowerPhone,
+			a.loan_amount borrowerRequestAmount,
+			b.loan_purpose BorrowerLoanPurpose,
+			CONCAT('MN', a.order_num,'PD') requestReferenceNum,
+			d.salary borrowerIncome,
+			a.user_id userId,
+			b.postcode postcode
+		FROM
+			user_order a,
+			user_info b,
+			user_info_expand c,
+			user_salary d,
+			user_pan_card e
+		WHERE
+			a.user_id = b.id 
+			AND a.user_id = c.user_id 
+			AND a.user_id = d.user_id 
+			AND A.user_id = e.user_id
+			AND a.order_num = #{orderNo}
+			ORDER BY d.create_time DESC 
+			LIMIT 1
+	</select>
+
+    <!-- kudos aadress -->
+    <select id="queryUserAds" resultType="com.cloud.model.user.UserAddress">
+		select * from user_address WHERE user_id=#{userId} AND address_type=#{adsType} ORDER BY create_time DESC LIMIT 1
+	</select>
+    <!-- kudos info -->
+    <select id="queryBorrowerInfo" resultType="com.cloud.order.model.kudos.BorrowerInfoApiEntity">
+		SELECT
+			c.id borrowerEmployerId,
+			b.account_name borrowerAcHolderNme,
+			b.bank_account borrowerAcNum,
+			b.bank_name borrowerBnkNme,
+			b.ifsc_code borrowerBnkIfsc,
+			d.marriage_status borrowerMaritalStatus,
+			 CONCAT('MN', a.order_num,'PD') disbursementTransTracNum,
+			f.rate loanIntRt,
+			c.education_degree borrowerQualification,
+			d.postcode borrowerCurrPincode,
+			d.sex sex
+		FROM
+			user_order a,
+			user_bank_card b,
+			user_info_expand c,
+			user_info d,
+			product_loan e,
+			product_interest_penalty f,
+			user_pan_card g,
+			user_body_img h 
+		WHERE
+			a.user_id = b.user_id 
+			AND a.user_id = c.user_id 
+			AND a.user_id = d.id 
+			AND a.product_id = e.id 
+			AND e.interest_id = f.id 
+			AND a.user_id = g.user_id 
+			AND a.user_id = h.user_id
+			AND a.order_num = #{orderNo}
+		ORDER BY
+			b.binding_time DESC 
+			LIMIT 1
+	</select>
+    <!-- 获取合同、借据 -->
+    <select id="queryContract" resultType="com.cloud.model.FinanceLoanContract">
+		SELECT
+			b.contract_url 
+		FROM
+			user_order a,
+			finance_loan_contract b 
+		WHERE
+			a.order_num = b.contract_no 
+			AND a.order_num = #{orderNo} AND b.contract_type=#{contractType} LIMIT 1
+	</select>
+    <!-- 获取订单id -->
+    <select id="queryOrderNo" resultType="com.cloud.order.model.OrderTableModel">
+		select a.* from user_order a where a.order_num = #{orderNo}
+	</select>
+    <select id="findCheckStatus" resultType="int">
+        select check_status from user_order where id = #{orderId}
+    </select>
+    <select id="getVoterAuthInfoByOrderNo" resultType="com.cloud.order.model.VoterAuthInfo">
+      SELECT
+        u.voter_back_url AS voterBackUrl,
+        u.voter_front_url AS voterFrontUrl,
+        u.voter_id_card AS voterIdNo,
+        u.electors_name AS voterIdName,
+        u.relations_name AS voterIdFamilyName
+      FROM
+        user_info_history AS u
+      WHERE
+        u.order_no = #{orderNo}
+    </select>
+
+    <select id="getStudentInfoByOrderNo" resultType="com.cloud.order.model.StudentInfo">
+      SELECT
+        expend.school,
+        expend.enrollment_year AS enrollmentYear,
+        expend.alimony,
+        expend.specialty,
+        address.state AS schoolState,
+        address.district AS schoolDistrict,
+        address.county AS schoolCounty,
+        address.town AS schoolTown,
+        address.address_detail AS schoolAddressDetail
+      FROM
+         user_info_history AS expend LEFT JOIN user_address address ON expend.school_address_id= address.id
+      WHERE
+         expend.order_no = #{orderNo}
+    </select>
+
+    <!--通过OrderID 寻找orderNum-->
+    <select id="findOrderNumByOrderId" resultType="String">
+        SELECT  order_num FROM  user_order  WHERE id=#{orderId}
+    </select>
+
+    <select id="findAssignCountByOrderId" resultType="int">
+
+        select  count(1)  from   order_assign_log  where order_id=#{orderId}
+
+    </select>
+    <select id="getFirstOrderCreatedByUserIds" resultType="com.cloud.order.model.OrderTableModel">
+        SELECT *
+        FROM user_order
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+            #{userId}
+        </foreach>
+        ORDER BY
+        create_time ASC
+        LIMIT 1
+    </select>
+    <!-- ssp   ordernum to id -->
+    <select id="queryOrderNumToId" resultType="int">
+    	select o.id from user_order o where o.order_num = #{orderNum}
+    </select>
+    <update id="updateOrderAuditTimeByOrderId">
+update user_order
+set final_audit_time=now()
+where  id=#{orderId}
+
+    </update>
+
+    <select id="queryLoanRequestInfo" resultType="com.cloud.order.model.kudos.LoanRequestApiEntity">
+		SELECT
+			b.aadhaar_account borrowerAdhaarNum,
+			b.birthday borrowerDob,
+			b.email borrowerEmail,
+			b.first_name borrowerFName,
+			b.loan_purpose loanPurpose,
+			d.permanent_no borrowerPanNum,
+			b.cell_phone borrowerMob,
+			b.sex borrowerSex,
+			e.borrow_amount loanAmt,
+			e.loan_money_amount loanDisbursementAmt,
+			c.term loanTenure,
+			a.id partnerLoanId,
+			a.user_id partnerBorrowId,
+			a.check_status partnerLoanStatus,
+			e.loan_start_date loanStartDate,
+			e.loan_end_date loanEndDate,
+			e.real_closing_date realClosingDate
+		FROM
+			user_order a,
+			user_info b,
+			product_loan c,
+			user_pan_card d,
+			user_loan e
+		WHERE
+			a.user_id = b.id
+			AND a.product_id = c.id
+			AND b.id = d.user_id
+			AND a.user_id = e.user_id
+			AND a.order_num = #{orderNo}
+			LIMIT 1
+	</select>
+	<!-- 获取支付后的orderid,但没有存，先以流水号代替 -->
+	<select id="queryOrderIdParam" resultType="com.cloud.order.model.kudos.PGOrderIdParamEntity">
+		select f.order_no orderNo,f.serial_number serialNumber from finance_pay_log f where f.order_no = #{orderNo} ORDER BY f.create_time DESC LIMIT 1
+	</select>
+    <select id="queryUpdocumentApiInfo" resultType="com.cloud.order.model.kudos.UploadDocumentApiEntity">
+		SELECT
+			c.id borrowerEmployerId,
+			b.ifsc_code borrowerBnkIfsc,
+			d.bank_statement_url borrowerBnkStmtDoc,
+			d.aadhaar_url_front borrowerAdhaarDoc,
+			g.card_front_url borrowerPanDoc,
+			h.face_img borrowerPhotoDoc,
+			a.user_id partnerBorrowerId
+		FROM
+			user_order a,
+			user_bank_card b,
+			user_info_expand c,
+			user_info d,
+			user_pan_card g,
+			user_body_img h
+		WHERE
+			a.user_id = b.user_id
+			AND a.user_id = c.user_id
+			AND a.user_id = d.id
+			AND a.user_id = g.user_id
+			AND a.user_id = h.user_id
+			AND a.order_num = #{orderNo}
+		ORDER BY
+			b.binding_time DESC
+			LIMIT 1
+	</select>
+
+    <select id="queryUserIdByOrderNo" resultType="String">
+		SELECT a.user_id
+		FROM
+			user_order a
+		WHERE a.order_num = #{orderNo}
+	</select>
+    <select id="getExtensionCountByDate" resultType="int">
+
+select count(*)  from    finance_extension   extension
+
+ join
+   finance_repay   repay  on   extension.order_no=repay.order_no
+ where   repay.repay_date=#{date}
+    </select>
+    <select id="getExtensionCount" resultType="com.cloud.order.model.FinanceExtensionReportParam">
+
+SELECT
+	count( * ) exporeCount,
+	repay.repay_date reportDate
+FROM
+	finance_extension extension
+	JOIN finance_repay repay ON extension.order_no = repay.order_no
+GROUP BY
+	repay.repay_date
+    </select>
+    <select id="getReportOrderDetails" resultType="com.cloud.order.model.ReportOrderDetailsModel" parameterType="List">
+        select * from report_order_details
+        <where>
+
+            <if test="beginDate != null and beginDate != ''">
+                and DATE_FORMAT(report_date,"%Y-%m-%d") &gt;= #{beginDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and DATE_FORMAT(report_date,"%Y-%m-%d") &lt;= #{endDate}
+            </if>
+
+        </where>
+
+    </select>
+    <!--获取订单报表 接口-->
+    <select id="getReportOrderDetailsByDates" resultType="com.cloud.order.model.ReportOrderDetailsModel" parameterType="List">
+        select * from report_order_details
+        <where>
+
+            1=1
+            and report_date in(
+            <foreach collection="list" item="item" index="index" separator=",">
+                #{item.reportDate}
+            </foreach>
+            )
+
+        </where>
+
+    </select>
+    <select id="getReportOrderDate" parameterType="Map" resultType="Map">
+        select   distinct  report_date reportDate from   report_order_details
+        where    (pending_count>0 or  repayment_count>0)
+        <if test="beginDate != null and beginDate != ''">
+            and DATE_FORMAT(report_date,"%Y-%m-%d") &gt;= #{beginDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            and DATE_FORMAT(report_date,"%Y-%m-%d") &lt;= #{endDate}
+        </if>
+        <if test="sortStatus!=null and  sortStatus!=''">
+            <if test="sortStatus==1">
+             and   DATE_FORMAT(report_date,"%Y-%m-%d")&lt;=DATE_FORMAT(now(),"%Y-%m-%d")
+             </if>
+            <if test="sortStatus==2">
+                and   DATE_FORMAT(report_date,"%Y-%m-%d")>DATE_FORMAT(now(),"%Y-%m-%d")
+            </if>
+        </if>
+
+        <if test="sortStatus!=null and  sortStatus!=''">
+            <if test="sortStatus==1">
+              order by  report_date desc
+            </if>
+            <if test="sortStatus==2">
+                order by  report_date
+            </if>
+        </if>
+        <if test="sortStatus==null or  sortStatus=='' or  sortStatus==0">
+                order by  report_date desc
+        </if>
+
+
+    </select>
+
+
+    <select id="getSameCompanyNameAndMobileByOrderNo"
+            resultType="Map">
+
+      select  addr.company_phone  companyMobile ,
+      history.company_name  companyName
+      from      user_info_history  history
+join    user_address  addr on     addr.id=history.company_address_id
+where   history.order_no=#{orderNo}
+
+
+    </select>
+    <select id="getSameCompanyOrderInfoByCompanyMobileOrName"
+            resultType="com.cloud.model.product.OrderHistoryDto">
+
+        select addr.company_phone companyMobile ,
+        history.mobile mobile,
+        history.order_no orderNo,
+        `order`.user_name userName,
+        `order`.check_status auditorOrderStatus
+
+        from user_info_history history
+        join user_address addr on addr.id=history.company_address_id
+        join user_order `order` on `order` .order_num=history.order_no
+
+        where
+        1=1
+        <if test="companyName!=null and companyName!='' ">
+            and history.company_name=#{companyName}
+        </if>
+        <if test="companyMobile!=null and companyMobile!='' ">
+            and addr.company_phone=#{companyMobile}
+
+        </if>
+
+
+    </select>
+
+    <select id="getSameCompanyOrderInfoByOrderNo"
+            resultType="com.cloud.model.product.OrderHistoryDto">
+
+        select  addr.company_phone  companyMobile ,
+        history.mobile  mobile,
+        history.order_no orderNo,
+        `order`.user_name  userName,
+        `order`.check_status auditorOrderStatus
+
+        from  user_info_history  history
+        join  user_address  addr   on     addr.id=history.company_address_id
+        join  user_order  `order`  on   `order` .order_num=history.order_no
+
+        where
+            history.order_no in (${orderNos})
+
+    </select>
+    <select id="getSameCompanyOrderInfoByUserIds"
+            resultType="com.cloud.model.product.OrderHistoryDto">
+
+        select  addr.company_phone  companyMobile ,
+        history.mobile  mobile,
+        history.order_no orderNo,
+        `order`.user_name  userName,
+        `order`.check_status auditorOrderStatus
+
+        from  user_info_history  history
+        left join  user_address  addr   on     addr.id=history.company_address_id
+        left join  user_order  `order`  on   `order` .order_num=history.order_no
+        where
+            `order` .user_id in (${userIds})
+
+    </select>
+
+    <select id="getOrderInfoByOrderNo" resultType="com.cloud.order.model.OrderTableModel">
+select *   from user_order  where order_num =#{orderNo}
+
+    </select>
+
+    <select id="getOrderListByUserId" resultType="com.cloud.order.model.OrderTableModel">
+        select  *  from  user_order where user_id=#{userId}
+    </select>
+
+
+    <insert id="insertMechineCheck" parameterType="List">
+        insert into order_check_log
+        (
+        order_check_log.order_id,
+        order_check_log.auditor_name,
+        order_check_log.`status`,
+        order_check_log.result,
+        order_check_log.reason,
+        order_check_log.`comment`,
+        order_check_log.create_time,
+        order_check_log.node,
+        order_check_log.is_warning,
+        order_check_log.tag_ids
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.orderId},
+            #{item.auditorName},
+            #{item.status},
+            #{item.result},
+            #{item.reason},
+            #{item.comment},
+            now(),
+            #{item.node},
+            0,
+            #{item.tagIds}
+            )
+        </foreach>
+
+    </insert>
+
+
+    <select id="getUserOrderByOrderId" resultType="com.cloud.model.appUser.AppUserOrderInfo">
+        SELECT *
+        FROM  user_order
+        WHERE id = #{orderId}
+    </select>
+
+    <select id="listQueryLoanStatusByOrderNumList" parameterType="List" resultType="Integer">
+        SELECT loan_status FROM user_loan WHERE loan_number IN
+        <foreach collection="list" index="index" item="orderNum"
+                 open="(" separator="," close=")">
+            #{orderNum}
+        </foreach>
+    </select>
+
+    <select id="listQueryPaiedDueOrderNumInOrderNumList" parameterType="List" resultType="String">
+		SELECT
+            fdo.order_no
+		FROM
+			finance_due_order fdo
+			JOIN user_loan ul ON ul.loan_number = fdo.order_no
+			AND ul.loan_status = 2
+		WHERE
+			fdo IN
+        <foreach collection="list" index="index" item="orderNum"
+                 open="(" separator="," close=")">
+            #{orderNum}
+        </foreach>
+    </select>
+
+    <select id="listQueryCurrentDueOrderNumByPhoneList" parameterType="List" resultType="String">
+        SELECT loan_number FROM user_loan WHERE loan_status = 1 AND user_phone IN
+        <foreach collection="list" index="index" item="phone"
+                 open="(" separator="," close=")">
+            #{phone}
+        </foreach>
+    </select>
+
+    <select id="listQueryApplyPhonesInPhones" parameterType="List">
+        SELECT DISTINCT(cell_phone) FROM user_order WHERE cell_phone IN
+        <foreach collection="list" index="index" item="phone"
+                 open="(" separator="," close=")">
+            #{phone}
+        </foreach>
+    </select>
+</mapper>

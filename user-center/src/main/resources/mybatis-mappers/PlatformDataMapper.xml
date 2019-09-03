@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.platform.dao.PlatformDataDao">
+
+    <select id="getInnerAadhaar" parameterType="Map" resultType="com.cloud.platform.model.PlatformAadhaarDataModel">
+        SELECT
+        userInfo.id userId,
+        userInfo.first_name userName,
+        userInfo.aadhaar_account userAadhaarNo,
+        userInfo.register_time createTime,
+        userInfo.cell_phone userMobile,
+        CASE
+
+        WHEN userInfo.student_status = 0 THEN
+        concat( addr.state, ' ', addr.district, ' ', addr.town, ' ', addr.address_detail ) ELSE concat( sc.state, ' ', sc.district, ' ', sc.town, ' ', sc.address_detail )
+        END userAddress
+        FROM
+        user_info userInfo
+        JOIN user_info_history his ON userInfo.id = his.user_id
+        AND his.id IN ( SELECT max( id ) FROM user_info_history GROUP BY user_id )
+        LEFT JOIN user_address addr ON his.home_address_id = addr.id
+        LEFT JOIN user_address sc ON his.school_address_id = sc.id
+       <where>
+           1=1
+           <if test="userAadhaarNo != null and userAadhaarNo != ''">
+               and userInfo.aadhaar_account like concat('%',#{userAadhaarNo},'%')
+           </if>
+           <if test="userId != null and userId != '' ">
+               and userInfo.id like concat('%',#{userId},'%')
+           </if>
+       </where>
+        order by userInfo.register_time desc
+    </select>
+
+    <select id="getOuterAadhaar" parameterType="Map" resultType="com.cloud.platform.model.PlatformAadhaarDataModel">
+        select * from platform_aadhaar_data
+        <where>
+            is_delete = 0
+            <if test="userAadhaarNo != null and userAadhaarNo != ''">
+                and user_aadhaar_no like concat('%',#{userAadhaarNo},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertOutAadhaarByList" parameterType="List">
+        insert into platform_aadhaar_data
+        (data_type,  user_name,
+         user_address, user_mobile, create_time,
+         user_aadhaar_no) VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (1,#{item.userName},
+            #{item.userAddress},#{item.userMobile},#{item.createTime},
+            #{item.userAadhaarNo})
+        </foreach>
+    </insert>
+
+    <select id="screenOutAadhaar" parameterType="Map" resultType="com.cloud.platform.model.PlatformAadhaarDataModel">
+        select b.* from
+(select user_aadhaar_no,count(1) num from platform_aadhaar_data
+where is_delete = 0 group by user_aadhaar_no ) a
+left join platform_aadhaar_data b on a.user_aadhaar_no =b.user_aadhaar_no
+        <where>
+            b.is_delete = 0
+            <if test="userAadhaarNo != null and userAadhaarNo != ''">
+                and b.user_aadhaar_no like concat('%',#{userAadhaarNo},'%')
+            </if>
+        </where>
+order by a.num desc ,a.user_aadhaar_no,b.id desc
+    </select>
+
+    <update id="deleteRepeatAadhaar" parameterType="Map">
+        update platform_aadhaar_data
+        set is_delete = 1
+        where id in (${ids})
+    </update>
+
+
+</mapper>

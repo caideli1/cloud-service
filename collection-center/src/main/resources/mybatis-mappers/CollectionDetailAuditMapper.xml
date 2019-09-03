@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.CollectionDetailsAuditDao">
+
+
+    <sql id="orderBy">
+        <if test="loanAmountSort != null and loanAmountSort != '' ">
+            <if test="loanAmountSort == 1">
+                order By collection.loan_amount
+            </if>
+            <if test="loanAmountSort == 2">
+                order By collection.loan_amount desc
+            </if>
+        </if>
+        <if test="dueAmountSort != null and dueAmountSort != '' ">
+            <if test="dueAmountSort == 1">
+                order By collection.due_amount
+            </if>
+            <if test="dueAmountSort == 2">
+                order By collection.due_amount desc
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryCollDetailsAuditList" resultType="com.cloud.model.collection.CollectionRecordVo" parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>
+        ,cda.apply_date reductionApplyTime, cda.audit_status applyStatus
+        <include refid="CollectionCommonMapper.from"/>
+        join  collection_details_audit  cda ON collection.id = cda.collection_id
+        <include refid="CollectionCommonMapper.where"/>
+        <include refid="orderBy"/>
+    </select>
+
+    <select id="existCollDetailsAudit" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			collection_details_audit
+			JOIN collection_record ON collection_record.id = collection_details_audit.collection_id
+			JOIN finance_due_order ON collection_record.due_id = finance_due_order.id
+		WHERE
+			collection_details_audit.apply_check_user_id = #{sysUserId}
+			AND finance_due_order.order_no = #{orderNo}
+    </select>
+
+    <select id="queryCollDetailAuditByCollIds" resultType="com.cloud.collection.model.CollectionDetailsAuditModel">
+        SELECT
+	        *
+        FROM
+	        collection_details_audit
+        WHERE
+	        collection_id IN (#{collectionIds})
+        AND id IN (
+	        SELECT
+		        MAX(id) AS id
+	        FROM
+		        collection_details_audit
+	        GROUP BY
+		        collection_id
+        )
+    </select>
+
+    <update id="updateBatch" parameterType="java.util.List">
+        update collection_details_audit
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="is_deleted =case" suffix="end,">
+                <foreach collection="list" item="item" index="index">
+                    when id=#{item.id} then #{item.isDeleted}
+                </foreach>
+            </trim>
+        </trim>
+        where id in
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+</mapper>

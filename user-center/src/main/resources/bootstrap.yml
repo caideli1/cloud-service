@@ -1,0 +1,36 @@
+server:
+  port: 8800
+spring:
+  application:
+    name: user-center
+  profiles:
+    active: dev
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-center
+      profile: ${spring.profiles.active}
+      fail-fast: true
+  jackson:
+    default-property-inclusion: non_null
+#    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+5:30
+  devtools:
+    restart:
+      log-condition-evaluation-delta: false
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.int}
+
+management:
+  health:
+    redis:
+      enabled: false
+pagehelper:
+  helper-dialect: mysql

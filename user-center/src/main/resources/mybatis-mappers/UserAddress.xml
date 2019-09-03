@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.UserAddressDao">
+    <select id="queryUserAddressByUserId" resultType="com.cloud.model.appUser.AppUserAddressInfo">
+SELECT
+user_address.id,
+user_address.user_id  userId,
+user_address.company_phone companyPhone,
+user_address.address_detail addressDetail,
+user_address.state,
+user_address.district,
+user_address.county,
+user_address.town,
+user_address.create_time createTime,
+user_address.address_type addressType
+FROM
+user_address
+join  user_info `user` on  `user`.id=user_address.user_id and  user_address.address_type=1
+where `user`.id=#{userId}
+    </select>
+
+</mapper>

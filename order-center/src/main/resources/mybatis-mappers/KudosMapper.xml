@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.KudosDao">
+	<select id="queryKudos" resultType="com.cloud.order.model.KudosParamEntity">
+		select k.* from kudos_param k order by k.param_id desc
+	</select>
+   
+    <select id="queryKudosParams" resultType="com.cloud.order.model.KudosParamEntity" >
+		select k.* from kudos_param k where 1=1
+		<if test="name != null and name != ''">
+            AND k.`name` = #{name} 
+        </if>
+		<if test="code != null and code != ''">
+            AND k.`code`= #{code}
+        </if>
+        <if test="value != null and value != ''">
+            AND k.value= #{value}
+        </if>
+		 order by k.param_id desc
+	</select>
+	<insert id="insertKudosResponse" parameterType="com.cloud.order.model.KudosResponseEntity" useGeneratedKeys="true" keyProperty="kudosid">
+		INSERT INTO kudos_response
+        ( orderId,
+          status,
+          result_code,
+          message,
+          kudosloanid,
+          kudosclientid,
+          onboarded,
+          account_status,
+          kudos_type,
+          remark,
+          info,
+          create_Time,
+          create_User,
+          update_Time,
+          update_User
+          )
+        VALUES
+         ( #{orderId},
+           #{status},
+           #{resultCode},
+           #{message},
+           #{kudosloanid},
+           #{kudosclientid},
+           #{onboarded},
+           #{accountStatus},
+           #{kudosType},
+           #{remark},
+           #{info},
+           NOW(),
+           #{createUser},
+           #{updateTime},
+           #{updateUser}
+           )
+	</insert>
+	<!-- 手动接口处理异常数据 -->
+	<update id="updateKudosResponse" parameterType="com.cloud.order.model.KudosResponseEntity">
+        update kudos_response
+        set
+        <if test="status != null and status != ''">
+               status = #{status},
+        </if>
+        <if test="resultCode != null and resultCode != ''">
+               result_code = #{resultCode},
+        </if>
+        <if test="message != null and message != ''">
+               message = #{message},
+        </if>
+        <if test="kudosloanid != null and kudosloanid != ''">
+               kudosloanid = #{kudosloanid},
+        </if>
+        <if test="kudosclientid != null and kudosclientid != ''">
+               kudosclientid = #{kudosclientid},
+        </if>
+        <if test="onboarded != null and onboarded != ''">
+               onboarded = #{onboarded},
+        </if>
+        <if test="accountStatus != null and accountStatus != ''">
+               account_status = #{accountStatus},
+        </if>
+        <!-- <if test="kudosType != null">
+               kudos_type = #{kudosType},
+        </if> -->
+        <if test="remark != null and remark != ''">
+               remark = #{remark},
+        </if>
+        <if test="info != null and info != ''">
+               info = #{info},
+        </if>
+        <if test="updateUser != null and updateUser != ''">
+               update_User = #{updateUser}
+        </if>
+        where orderId = #{orderId} and kudos_type = #{kudosType}
+    </update>
+	<!-- kudos版本1.0 -->
+    <select id="selectKudosResponse" resultType="com.cloud.order.model.KudosResponseEntity">
+		SELECT
+			 k.*
+		FROM
+			kudos_response k
+		WHERE
+			k.order_no = #{orderNo}
+			AND k.kudos_type = #{kudosType}
+		ORDER BY
+			k.create_Time ASC LIMIT 1
+	</select>
+	<!-- kudos版本2.0 -->
+	<!-- <select id="queryKDLoanRequest" resultType="">
+		SELECT
+			 k.*
+		FROM
+			kd_loan_response k
+		WHERE
+			k.order_no = #{orderNo}
+			AND k.result_code = '200'
+		ORDER BY
+			k.create_time ASC LIMIT 1
+	</select> -->
+	
+	<select id="queryKudosResponseId" resultType="String">
+		SELECT
+			 kudosid
+		FROM
+			kudos_response k 
+		WHERE
+			k.orderId = #{orderId} 
+			AND k.kudos_type = #{kudosType} 
+		ORDER BY
+			k.create_Time ASC LIMIT 1
+	</select>
+
+	<insert id="insertKudosCibil" parameterType="com.cloud.order.model.LoanCibilResponseEntity" useGeneratedKeys="true" keyProperty="cibilId">
+		INSERT INTO kudos_cibil_response (
+			orderId,
+			referenceNumber,
+			password,
+			user,
+			memberCode,
+			businessUnitId,
+			applicationId,
+			solutionSetId,
+			step,
+			start,
+			code,
+			description,
+			panNumber,
+			score,
+			scoreType,
+			createTime,
+			info
+		)
+		 VALUES
+         ( 
+           #{orderId},
+           #{referenceNumber},
+           #{password},
+           #{user},
+           #{memberCode},
+           #{businessUnitId},
+           #{applicationId},
+           #{solutionSetId},
+           #{step},
+           #{start},
+           #{code},
+           #{description},
+           #{panNumber},
+           #{score},
+           #{scoreType},
+           NOW(),
+           #{info}
+           )
+	</insert>
+	<!-- kudos获取cibil返回的score -->
+	<select id="queryCibilScore" resultType="com.cloud.order.model.LoanCibilResponseEntity">
+		SELECT
+			a.applicationId,
+			a.businessUnitId,
+			a.`code`,
+			a.createTime,
+			a.description,
+			a.memberCode,
+			a.orderId,
+			a.panNumber,
+			a.`password`,
+			a.referenceNumber,
+			a.score,
+			a.scoreType,
+			a.solutionSetId,
+			a.`start`,
+			a.step,
+			a.`user` 
+		FROM
+			kudos_cibil_response a 
+		WHERE
+			a.orderId = #{orderId} ORDER BY a.createTime ASC limit 1
+	</select>
+	<!-- 查看cibil中orderid是否存在  -->
+	<select id="queryCibilCount" resultType="com.cloud.order.model.LoanCibilResponseEntity">
+		select a.* from kudos_cibil_response a WHERE a.orderId = #{orderId}
+	</select>
+	<!-- 查看kudos中orderid与kudosType是否存在 -->
+	<!-- <select id="queryKudosCount" resultType="">
+		select a.* from kudos_response a where a.orderId=#{orderId} AND a.kudos_type=#{kudosType}
+	</select> -->
+
+    <!-- kudos获取cibil返回的score -->
+    <select id="queryCibilScoreByOrderNo" resultType="String">
+		SELECT
+			a.score
+		FROM
+			kudos_cibilinfo a
+		WHERE
+			a.order_no = #{orderNo} ORDER BY a.create_time ASC limit 1
+	</select>
+	<!-- kudos2.0获取cibil返回分数 -->
+	<select id="queryValidationPostCibilScore" resultType="com.cloud.order.model.kudos.ValidationPost">
+		SELECT
+			a.score borrowerCreditScore 
+		FROM
+			kudos_score_segment a 
+		WHERE
+			a.order_no = #{orderNo} limit 1
+	</select>
+	<!-- kudos2.0  修改后的aadhaar和pancard信息 -->
+	<select id="queryValidationPostParams" resultType="com.cloud.order.model.kudos.ValidationPost">
+		SELECT
+			b.id,
+			b.aadhaar_account borrowerAdhaarNum,
+			c.permanent_no borrowerPanNum 
+		FROM
+			user_order a,
+			user_info b,
+			user_pan_card c 
+		WHERE
+			a.user_id = b.id 
+			AND b.id = c.user_id 
+			AND a.order_num = #{orderNo} 
+			LIMIT 1
+	</select>
+</mapper>

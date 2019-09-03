@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.SysUserPermissionDao">
+
+    <select id="findUserPermissionsByUserId" resultType="com.cloud.model.user.SysPermission">
+		SELECT
+			permission_id id,
+			permission,
+			name,
+			p.category
+		FROM
+			sys_user_permission_relation r
+		 	JOIN sys_permission p ON p.id = r.permission_id
+		WHERE
+			r.sys_user_id = #{sysUserId}
+    </select>
+</mapper>

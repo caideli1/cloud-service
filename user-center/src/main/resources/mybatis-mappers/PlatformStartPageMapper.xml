@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.platform.dao.PlatformStartPageDao">
+
+    <insert id="createPlatformStartPage" parameterType="com.cloud.platform.model.PlatformStartPageModel">
+        insert into platform_start_page
+        (page_name, page_img_src)
+        values (#{pageName},#{pageImgSrc})
+    </insert>
+
+    <update id="updatePlatformStartPage" parameterType="com.cloud.platform.model.PlatformStartPageModel">
+        update platform_start_page
+        set page_name = #{pageName},
+            page_img_src = #{pageImgSrc}
+            where id = #{id}
+    </update>
+
+    <select id="getPlatformStartPage" parameterType="Map" resultType="com.cloud.platform.model.PlatformStartPageModel">
+        select * from platform_start_page
+        <where>
+            is_delete = 0
+            <if test="pageName != null and pageName != ''">
+                and page_name like concat('%',#{pageName},'%')
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <update id="upOrDownStartPage" parameterType="Map">
+        update platform_start_page
+        set online_status = #{onlineStatus}
+        where id = #{id}
+    </update>
+
+    <update id="deleteStartPage" parameterType="Map">
+        update platform_start_page
+        set is_delete = 1
+        where id in (${ids})
+    </update>
+
+	
+</mapper>

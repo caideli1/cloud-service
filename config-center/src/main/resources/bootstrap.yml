@@ -1,0 +1,44 @@
+server:
+  port: 8000
+spring:
+  application:
+    name: config-center
+#  profiles:
+#    active: native
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/caideli1/springCloudConfig.git
+          search-paths: config
+          username: caideli1
+          password: cdl131170
+
+#  cloud:
+#    config:
+#      server:
+#        native:
+#          searchLocations: classpath:/configs/{profile}
+
+
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    root: info
+  file: logs/${spring.application.name}.log

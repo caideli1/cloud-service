@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.ProductDao">
+
+    <sql id="where">
+        <where>
+            t.is_deleted != 1
+            <if test="name != null and name != ''">
+                <bind name="_name" value="'%' + name + '%'"/>
+                and t.name like #{_name}
+            </if>
+            and t.is_penalty = #{isPenalty}
+        </where>
+    </sql>
+
+    <select id="findAllInterestPenalty" resultType="com.cloud.model.product.InterestPenaltyModel">
+        select t.*
+        from product_interest_penalty t
+        <include refid="where" />
+        GROUP BY t.id
+    </select>
+    
+    <select id="getInterestPenaltyByProductId" resultType="com.cloud.model.product.InterestPenaltyModel">
+        select t.* from product_interest_penalty t, product_loan l where  t.id = l.penalty_interest_id
+       and l.id = #{productId}
+    </select>
+
+    <select id="getInterestPenaltyModelList" resultType="com.cloud.model.product.InterestPenaltyModel" parameterType="Map">
+        SELECT
+          id,
+          name,
+          type,
+          rate,
+          is_penalty
+        FROM product_interest_penalty
+        WHERE 1 = 1
+        AND is_deleted = 0
+        <if test="isPenalty != null">
+            AND is_penalty = #{isPenalty}
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+
+    </select>
+
+    <select id="count" resultType="int">
+        select count(1) from product_interest_penalty t
+        <include refid="where" />
+    </select>
+
+    <select id="findInterestPenaltyById" resultType="com.cloud.model.product.InterestPenaltyModel" parameterType="java.lang.Integer">
+        select * from product_interest_penalty
+        where id = #{id}
+    </select>
+
+    <update id="updateInterestPenaltyById" parameterType="java.lang.Integer">
+            update product_interest_penalty
+            <set>
+                <if test="name != null and name != ''">
+                    name = #{name,jdbcType=CHAR},
+                </if>
+                <if test="type != null">
+                    type = #{type,jdbcType=TINYINT},
+                </if>
+                <if test="rate != null">
+                    rate = #{rate,jdbcType=DECIMAL},
+                </if>
+                <if test="modifyUser != null and modifyUser != ''">
+                    modify_user = #{modifyUser,jdbcType=CHAR},
+                </if>
+            </set>
+            where id = #{id,jdbcType=INTEGER}
+            and is_penalty = #{isPenalty,jdbcType=TINYINT}
+    </update>
+
+    <update id="delInterestPenaltyById">
+        update product_interest_penalty
+        set is_deleted = id
+        where id = #{id}
+    </update>
+
+    <!--插入loan_product-->
+    <insert id="insertLoanProduct" parameterType="com.cloud.model.product.LoanProductModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product_loan (
+          name,
+          term,
+          description,
+          status,
+          max_penalty_day,
+          is_allow_multiple,
+          repayment_type,
+          contract_number,
+          loan_amuount_type,
+          interest_id,
+          max_amount,
+          min_amount,
+          is_allow_prepay,
+          is_collect_penalty,
+          penalty_group,
+          penalty_interest_id,
+          service_rate_id,
+          create_user,
+          modify_user)
+        VALUES (
+          #{name},
+          #{term},
+          #{description},
+          #{status},
+          #{maxPenaltyDay},
+          #{isAllowMultiple},
+          #{repaymentType},
+          #{contractNumber},
+          #{loanAmountType},
+          #{interestId},
+          #{maxAmount},
+          #{minAmount},
+          #{isAllowPrepay},
+          #{isCollectPenalty},
+          #{penaltyGroup},
+          #{penaltyInterestId},
+          #{serviceRateId},
+          #{createUser},
+          #{modifyUser}
+        )
+    </insert>
+
+    <!--插入loan_product rate_type 中间表-->
+    <insert id="insertLoanProductRateType">
+        INSERT INTO product_loan_rate_type (product_id, rate_type_id)
+        VALUES
+        <foreach collection="list" item="rareTypeId" index="index" separator=",">
+            (#{loanId}, #{rareTypeId})
+        </foreach>
+    </insert>
+
+    <resultMap id="loanProduct" type="com.cloud.model.product.LoanProductModel">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"/>
+        <result column="term" property="term"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="max_penalty_day" property="maxPenaltyDay"/>
+        <result column="is_allow_multiple" property="isAllowMultiple"/>
+        <result column="repayment_type" property="repaymentType"/>
+        <result column="contract_number" property="contractNumber"/>
+        <result column="loan_amuount_type" property="loanAmountType"/>
+        <result column="max_amount" property="maxAmount"/>
+        <result column="min_amount" property="minAmount"/>
+        <result column="interest_id" property="interestId"/>
+        <result column="is_collect_penalty" property="isCollectPenalty"/>
+        <result column="is_allow_prepay" property="isAllowPrepay"/>
+        <result column="penalty_interest_id" property="penaltyInterestId"/>
+        <result column="penalty_group" property="penaltyGroup"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="modify_user" property="modifyUser"/>
+        <result column="modify_time" property="modifyTime"/>
+        <association property="serviceRate" javaType="com.cloud.model.product.ServiceRateModel">
+            <id column="sid" property="id"></id>
+            <result column="sname" property="name" ></result>
+        </association>
+        <collection property="rateTypeList" ofType="com.cloud.model.product.RateType">
+            <id column="rid" property="id"></id>
+            <result column="rname" property="name" ></result>
+            <result column="rate" property="rate" ></result>
+            <result column="mode" property="mode" ></result>
+            <result column="type" property="type" ></result>
+        </collection>
+    </resultMap>
+
+    <select id="getLoanProductById" parameterType="Integer" resultMap="loanProduct">
+        SELECT
+          l.id,
+          l.name,
+          l.term,
+          l.description,
+          l.status,
+          l.max_penalty_day,
+          l.is_allow_multiple,
+          l.repayment_type,
+          l.contract_number,
+          l.loan_amuount_type,
+          l.max_amount,
+          l.min_amount,
+          l.interest_id,
+          l.is_allow_prepay,
+          l.is_collect_penalty,
+          l.penalty_group,
+          l.penalty_interest_id,
+          l.create_user,
+          l.modify_user,
+          l.create_time,
+          l.modify_time,
+          psr.id sid,
+          psr.name sname,
+          r.id rid,
+          r.name rname,
+          r.rate,
+          r.mode
+        FROM product_loan AS l
+        LEFT JOIN product_service_rate AS psr
+        ON psr.id = l.service_rate_id AND psr.is_deleted = 0
+        LEFT JOIN product_loan_rate_type AS m
+        ON l.id = m.product_id AND l.is_deleted = 0
+        LEFT JOIN product_rate_type AS r
+        ON r.id = m.rate_type_id AND r.is_deleted = 0
+        WHERE l.id = #{id}
+    </select>
+
+
+    <update id="updateLoanProduct" parameterType="com.cloud.model.product.LoanProductModel">
+        UPDATE product_loan
+        <trim prefix="set" suffixOverrides=",">
+        <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="term != null">
+                term = #{term},
+            </if>
+            <if test="description != null and description != ''">
+                description = #{description},
+            </if>
+            <if test="maxPenaltyDay != null">
+                max_penalty_day = #{maxPenaltyDay},
+            </if>
+            <if test="isAllowMultiple != null">
+                is_allow_multiple = #{isAllowMultiple},
+            </if>
+            <if test="repaymentType != null">
+                repayment_type = #{repaymentType},
+            </if>
+            <if test="contractNumber != null">
+                contract_number = #{contractNumber},
+            </if>
+            <if test="loanAmountType != null">
+                loan_amuount_type = #{loanAmountType},
+            </if>
+            <if test="maxAmount != null">
+                max_amount = #{maxAmount},
+            </if>
+            <if test="minAmount != null">
+                min_amount = #{minAmount},
+            </if>
+            <if test="interestId != null">
+                interest_id = #{interestId},
+            </if>
+            <if test="isCollectPenalty != null">
+                is_collect_penalty = #{isCollectPenalty},
+            </if>
+            <if test="isAllowPrepay != null">
+                is_allow_prepay = #{isAllowPrepay},
+            </if>
+            <if test="penaltyGroup != null">
+                penalty_group = #{penaltyGroup},
+            </if>
+            <if test="penaltyInterestId != null">
+                penalty_interest_id = #{penaltyInterestId},
+            </if>
+            <if test="modifyUser != null and modifyUser != ''">
+                modify_user = #{modifyUser},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="serviceRateId != null">
+                service_rate_id = #{serviceRateId}
+            </if>
+        </trim>
+        WHERE id = #{id}
+    </update>
+
+    <select id="loanProductList"  resultType="com.cloud.model.product.LoanProductModel">
+        SELECT
+            id,
+            NAME,
+            STATUS,
+            is_allow_multiple,
+            repayment_type,
+            create_user,
+            create_time,
+            is_recommendation,
+            recommendation_sort
+        FROM
+            product_loan
+        WHERE
+            is_deleted = 0
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%',#{name},'%')
+            </if>
+            LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countLoanProduct" resultType="Integer">
+        SELECT COUNT(*)
+        FROM product_loan
+        WHERE is_deleted = 0
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%',#{name},'%')
+        </if>
+    </select>
+
+    <update id="deleteLoanProductById" parameterType="hashMap">
+        UPDATE product_loan
+        SET is_deleted = id, modify_user = #{userName}
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <select id="rateTypeList" resultType="com.cloud.model.product.RateType">
+        SELECT id, name, rate, mode, type
+        FROM product_rate_type
+        WHERE is_deleted = 0
+        <if test="mode" >
+            AND mode = #{mode}
+        </if>
+        <if test="type">
+            AND type = #{type}
+        </if>
+    </select>
+
+    <select id="rateTypeListDistinctName" resultType="com.cloud.model.product.RateType">
+        SELECT DISTINCT name, rate, type
+        FROM product_rate_type
+        WHERE is_deleted = 0
+        <if test="type">
+            AND type = #{type}
+        </if>
+    </select>
+
+    <delete id="deleteInsertLoanRateTypeByLoanId" parameterType="Integer">
+        DELETE FROM product_loan_rate_type
+        WHERE product_id = #{id}
+    </delete>
+
+    <select id="getLoanProductMaxAndMinAmountById" parameterType="Integer" resultType="java.util.Map">
+        SELECT
+          max_amount maxAmount,
+          min_amount minAmount
+        FROM product_loan
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="getLoanProductStatusById" resultType="Integer">
+        SELECT
+          status
+        FROM product_loan
+        WHERE id = #{id}
+    </select>
+
+    <update id="updateLoanProductStatus">
+        UPDATE product_loan
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <select id="getLoanProductList" resultMap="loanProduct">
+        SELECT
+            l.id,
+            l.name,
+            l.term,
+            l.description,
+            l.max_penalty_day,
+            l.is_allow_multiple,
+            l.repayment_type,
+            l.contract_number,
+            l.loan_amuount_type,
+            l.max_amount,
+            l.min_amount,
+            l.interest_id,
+            l.is_allow_prepay,
+            l.is_collect_penalty,
+            l.penalty_group,
+            l.penalty_interest_id,
+            l.create_user,
+            l.modify_user,
+            l.create_time,
+            l.modify_time,
+            r.id rid,
+            r.name rname,
+            r.rate,
+            r.mode,
+            r.type
+        FROM product_loan AS l
+                 LEFT JOIN product_loan_rate_type AS m
+                           ON l.id = m.product_id
+                 LEFT JOIN product_rate_type AS r
+                           ON r.id = m.rate_type_id
+        WHERE l.status = 2 AND l.is_deleted = 0 AND r.is_deleted = 0
+    </select>
+
+    <select id="getStartPage" resultType="com.cloud.model.appProduct.PlatformStartPageModel">
+        SELECT
+            id,
+               page_name as pageName,
+               online_status as onlineStatus,
+               page_img_src as pageImgSrc,
+               app_version as appVersion
+        FROM platform_start_page
+        where online_status = 1
+        and is_delete = 0
+    </select>
+    
+    <select id="queryAppVersion" resultType="com.cloud.order.model.AppVersionModel">
+		select a.* from app_version a ORDER BY a.create_time DESC LIMIT 1
+	</select>
+	
+	<update id="updateAppVersion" parameterType="com.cloud.order.model.AppVersionModel">
+        update app_version
+        set appversion = #{appversion},
+            update_time = #{updateTime}
+            where id = #{id}
+    </update>
+
+    <update id="setProductLoanRecommend">
+		UPDATE product_loan
+        <set>
+            <if test="isRec == true">
+                is_recommendation = 1,
+            </if>
+            <if test="isRec == false">
+                is_recommendation = 0,
+            </if>
+            recommendation_sort = #{recSort}
+        </set>
+		WHERE
+			id = #{productId}
+			AND is_deleted = 0
+    </update>
+
+    <select id="appQueryProductList" resultType="com.cloud.order.model.resp.AppProductRes">
+		SELECT
+			pl.id product_id,
+			pl.`name`,
+			pl.max_amount amount,
+			pl.term,
+            pl.max_amount * (psr.total_rate * (1 + psr.gst) +  pip.rate * pl.term) total_fee
+        FROM
+            product_loan pl
+        JOIN product_service_rate psr ON pl.service_rate_id = psr.id
+        JOIN product_interest_penalty pip ON pip.id = pl.interest_id
+		WHERE
+			pl.is_deleted = 0
+			AND pl.`status` = 2
+            <if test="term != null">
+                AND pl.term = #{term}
+            </if>
+            <if test="isRec != null and isRec == true">
+                AND pl.is_recommendation = 1
+                AND pl.recommendation_sort != 0
+                ORDER BY pl.recommendation_sort
+            </if>
+            <if test="isRec == null">
+                ORDER BY pl.max_amount
+            </if>
+        <if test="isRec != null and isRec == false">
+            ORDER BY pl.max_amount
+        </if>
+    </select>
+
+
+    <resultMap id="appQueryProductRateDescriptionMap" type="com.cloud.order.model.resp.AppProductRateDescriptionRes">
+        <result column="gst" property="gst"/>
+        <collection property="rateTypesList" ofType="com.cloud.model.product.RateType">
+            <result column="name" property="name" />
+            <result column="rate" property="rate" />
+        </collection>
+    </resultMap>
+
+    <select id="appQueryProductServiceRateRateDescription" resultMap="appQueryProductRateDescriptionMap">
+		SELECT
+		    psr.gst gst,
+			pr.name,
+			pr.rate
+		FROM
+			product_service_rate psr
+			JOIN product_rate_type pr
+			ON pr.service_rate_id = psr.id
+		WHERE
+			psr.is_deleted = 0
+			<if test="term != null and term == 7">
+                and psr.name = '7-days-service-rate'
+            </if>
+        <if test="term != null and term == 14">
+            and psr.name = '14-days-service-rate'
+        </if>
+    </select>
+</mapper>

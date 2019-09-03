@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.FinanceReportDao">
+    <!--查询汇总报表数据-->
+    <select id="querySumRecord" resultType="com.cloud.order.model.FinanceReportSumRecordModel">
+
+        SELECT
+        finance_report_sum_record.due_in_amount dueInAmount,
+        finance_report_sum_record.due_in_count dueInCount,
+        finance_report_sum_record.payable_amount payableAmount,
+        finance_report_sum_record.payable_count payableCount,
+        finance_report_sum_record.loan_amount loanAmount,
+        finance_report_sum_record.due_seven_5000_count dueSeven5000Count,
+        finance_report_sum_record.due_fourteen_10000_count dueFourteen10000Count,
+        finance_report_sum_record.due_seven_10000_count dueSeven10000Count,
+        finance_report_sum_record.due_fourteen_5000_count dueFourteen5000Count,
+        finance_report_sum_record.payable_seven_5000_count payableSeven5000Count,
+        finance_report_sum_record.payable_seven_10000_count payableSeven10000Count,
+        finance_report_sum_record.payable_fourteen_5000_count payableFourteen5000Count,
+        finance_report_sum_record.payable_fourteen_10000_count payableFourteen10000Count,
+        finance_report_sum_record.loan_count loanCount,
+        finance_report_sum_record.loan_seven_5000_count loanSeven5000Count,
+        finance_report_sum_record.loan_seven_10000_count loanSeven10000Count,
+        finance_report_sum_record.loan_fourteen_5000_count loanFourteen5000Count,
+        finance_report_sum_record.loan_fourteen_10000_count loanFourteen10000Count
+        FROM
+        finance_report_sum_record
+        where
+        <!--锁死查询为最小的一条 只查询一条数据-->
+        finance_report_sum_record.id = ( select MIN(id) from finance_report_sum_record)
+    </select>
+    <!--查询日期报表信息-->
+    <select id="queryReport" resultType="com.cloud.order.model.FinanceReportRecordModel">
+        SELECT
+        finance_report_record.id ,
+		DATE_FORMAT(finance_report_record.report_date, "%Y-%m-%d") reportDate,
+        finance_report_record.loan_amount loanAmount,
+        finance_report_record.loan_count loanCount,
+        finance_report_record.loan_seven_5000_count loanSeven5000Count,
+        finance_report_record.loan_fourteen_10000_count loanFourteen10000Count,
+        finance_report_record.loan_fourteen_5000_count loanFourteen5000Count,
+        finance_report_record.loan_seven_10000_count loanSeven10000Count,
+        finance_report_record.principal_amount principalAmount,
+        finance_report_record.principal_fourteen_amount principalFourteenAmount,
+        finance_report_record.principal_seven_amount principalSevenAmount,
+        finance_report_record.repayment_amount repaymentAmount,
+        finance_report_record.repayment_fourteen_amount repaymentFourteenAmount,
+        finance_report_record.repayment_seven_amount repaymentSevenAmount,
+        finance_report_record.expore_count exporeCount,
+        finance_report_record.payments_fourteen_count paymentsFourteenCount,
+        finance_report_record.payments_seven_count paymentsSevenCount,
+        finance_report_record.payments_count paymentsCount,
+        finance_report_record.due_fourteen_count dueFourteenCount,
+        finance_report_record.due_seven_count dueSevenCount,
+        finance_report_record.due_count dueCount,
+		finance_report_record.due_7d3k_count_and_principal_amount due7d3kCountAndPrincipalAmount,
+		finance_report_record.pay_7d3k_count_and_amount pay7d3kCountAndAmount,
+		finance_report_record.due_7d5k_count_and_principal_amount due7d5kCountAndPrincipalAmount,
+		finance_report_record.pay_7d5k_count_and_amount pay7d5kCountAndAmount,
+		finance_report_record.due_7d8k_count_and_principal_amount due7d8kCountAndPrincipalAmount,
+		finance_report_record.pay_7d8k_count_and_amount pay7d8kCountAndAmount,
+		finance_report_record.due_7d10k_count_and_principal_amount due7d10kCountAndPrincipalAmount,
+		finance_report_record.pay_7d10k_count_and_amount pay7d10kCountAndAmount,
+		finance_report_record.due_7d12k_count_and_principal_amount due7d12kCountAndPrincipalAmount,
+		finance_report_record.pay_7d12k_count_and_amount pay7d12kCountAndAmount,
+		finance_report_record.due_7d13k_count_and_principal_amount due7d13kCountAndPrincipalAmount,
+		finance_report_record.pay_7d13k_count_and_amount pay7d13kCountAndAmount,
+		finance_report_record.due_14d3k_count_and_principal_amount due14d3kCountAndPrincipalAmount,
+		finance_report_record.pay_14d3k_count_and_amount pay14d3kCountAndAmount,
+		finance_report_record.due_14d5k_count_and_principal_amount due14d5kCountAndPrincipalAmount,
+		finance_report_record.pay_14d5k_count_and_amount pay14d5kCountAndAmount,
+		finance_report_record.due_14d8k_count_and_principal_amount due14d8kCountAndPrincipalAmount,
+		finance_report_record.pay_14d8k_count_and_amount pay14d8kCountAndAmount,
+		finance_report_record.due_14d10k_count_and_principal_amount due14d10kCountAndPrincipalAmount,
+		finance_report_record.pay_14d10k_count_and_amount pay14d10kCountAndAmount,
+		finance_report_record.due_14d12k_count_and_principal_amount due14d12kCountAndPrincipalAmount,
+		finance_report_record.pay_14d12k_count_and_amount pay14d12kCountAndAmount,
+		finance_report_record.due_14d13k_count_and_principal_amount due14d13kCountAndPrincipalAmount,
+		finance_report_record.pay_14d13k_count_and_amount pay14d13kCountAndAmount,
+		finance_report_record.finance_extension_count financeExtensionCount
+        FROM
+        finance_report_record
+
+        <where>
+			(
+			principal_amount != 0 or principal_fourteen_amount !=0 or principal_seven_amount !=0
+			or repayment_amount !=0 or repayment_fourteen_amount !=0 or repayment_seven_amount!=0
+			or expore_count!=0 or payments_fourteen_count !=0 or payments_seven_count!=0 or payments_count!=0
+			or due_fourteen_count!=0 or due_seven_count!=0 or due_count!=0
+			)
+			<!--判定是否有开始结束时间 加上判定-->
+            <if test="beginDate!=null and  beginDate!=''">
+                and finance_report_record.report_date &gt;= #{beginDate}
+            </if>
+            <if test="endDate != null and  endDate != ''">
+                and finance_report_record.report_date &lt;= #{endDate}
+            </if>
+
+        </where>
+        order by finance_report_record.report_date
+    </select>
+
+    <!--汇总日期报表信息并跟修改入汇总报表-->
+    <update id="updateToSum">
+UPDATE finance_report_sum_record
+SET finance_report_sum_record.loan_amount = ( SELECT SUM( loan_amount ) loan_amount FROM finance_report_record ),
+finance_report_sum_record.loan_count = ( SELECT SUM( loan_count ) FROM finance_report_record ),
+finance_report_sum_record.loan_seven_5000_count = ( SELECT SUM( loan_seven_5000_count ) FROM finance_report_record ),
+finance_report_sum_record.payable_fourteen_10000_count = (
+SELECT
+	IFNULL( SUM( pay.amount ), 0 )
+FROM
+	finance_pay_log pay
+	JOIN finance_repay repay ON pay.order_no = repay.order_no
+WHERE
+	pay.pay_status = '1'
+	AND ( pay.loan_type != '1' OR pay.loan_type != '2' OR pay.loan_type != '7' )
+	AND repay.loan_amount = '5000'
+	AND loan_period = '7'
+	),
+	finance_report_sum_record.payable_fourteen_5000_count = (
+SELECT
+	IFNULL( COUNT( DISTINCT repay.order_no ), 0 )
+FROM
+	finance_pay_log pay
+	JOIN finance_repay repay ON pay.order_no = repay.order_no
+WHERE
+	pay.pay_status = '1'
+	AND ( pay.loan_type != '1' OR pay.loan_type != '2' OR pay.loan_type != '7' )
+	AND repay.loan_amount = '5000'
+	AND loan_period = '14'
+	),
+	finance_report_sum_record.payable_seven_10000_count = (
+SELECT
+	IFNULL( COUNT( DISTINCT repay.order_no ), 0 )
+FROM
+	finance_pay_log pay
+	JOIN finance_repay repay ON pay.order_no = repay.order_no
+WHERE
+	pay.pay_status = '1'
+	AND ( pay.loan_type != '1' OR pay.loan_type != '2' OR pay.loan_type != '7' )
+	AND repay.loan_amount = '10000'
+	AND loan_period = '7'
+	),
+	finance_report_sum_record.payable_seven_5000_count = (
+SELECT
+	IFNULL( COUNT( DISTINCT repay.order_no ), 0 )
+FROM
+	finance_pay_log pay
+	JOIN finance_repay repay ON pay.order_no = repay.order_no
+WHERE
+	pay.pay_status = '1'
+	AND ( pay.loan_type != '1' OR pay.loan_type != '2' OR pay.loan_type != '7' )
+	AND repay.loan_amount = '5000'
+	AND loan_period = '7'
+	),
+	finance_report_sum_record.loan_seven_10000_count = ( SELECT SUM( loan_seven_10000_count ) FROM finance_report_record ),
+	finance_report_sum_record.loan_fourteen_5000_count = ( SELECT SUM( loan_fourteen_5000_count ) FROM finance_report_record ),
+	finance_report_sum_record.loan_amount = ( SELECT SUM( loan_amount ) FROM finance_report_record ),
+	finance_report_sum_record.loan_fourteen_10000_count = ( SELECT SUM( loan_fourteen_10000_count ) FROM finance_report_record ),
+	finance_report_sum_record.due_seven_5000_count = ( SELECT count( * ) FROM finance_repay WHERE loan_period = '7' AND loan_amount = '5000' AND loan_type = '8' ),
+	finance_report_sum_record.due_fourteen_5000_count = ( SELECT count( * ) FROM finance_repay WHERE loan_period = '14' AND loan_amount = '5000' AND loan_type = '8' ),
+	finance_report_sum_record.due_seven_10000_count = ( SELECT count( * ) FROM finance_repay WHERE loan_period = '7' AND loan_amount = '10000' AND loan_type = '8' ),
+	finance_report_sum_record.due_fourteen_10000_count = ( SELECT count( * ) FROM finance_repay WHERE loan_period = '14' AND loan_amount = '10000' AND loan_type = '8' ),
+	finance_report_sum_record.due_seven_5000_count = ( SELECT count( * ) FROM finance_repay WHERE loan_period = '7' AND loan_amount = '5000' AND loan_type = '8' ),
+	finance_report_sum_record.payable_count = (
+SELECT
+	IFNULL( COUNT( DISTINCT repay.order_no ), 0 )
+FROM
+	finance_pay_log pay
+	JOIN finance_repay repay ON pay.order_no = repay.order_no
+WHERE
+	pay.pay_status = '1'
+	AND ( pay.loan_type != '1' OR pay.loan_type != '2' OR pay.loan_type != '7' )
+	),
+	finance_report_sum_record.payable_amount = (
+SELECT
+	IFNULL( sum( pay.amount ), 0 )
+FROM
+	finance_pay_log pay
+	JOIN finance_repay repay ON pay.order_no = repay.order_no
+WHERE
+	pay.pay_status = '1'
+	AND ( pay.loan_type != '1' OR pay.loan_type != '2' OR pay.loan_type != '7' )
+	),
+	finance_report_sum_record.due_in_count = ( SELECT SUM( due_count ) FROM finance_report_record ),
+	finance_report_sum_record.due_in_amount = ( SELECT IFNULL( SUM( amount ), 0 ) FROM finance_pay_log WHERE pay_status = '3' )
+WHERE
+	finance_report_sum_record.id = '1'
+
+   </update>
+
+
+
+
+
+
+
+</mapper>

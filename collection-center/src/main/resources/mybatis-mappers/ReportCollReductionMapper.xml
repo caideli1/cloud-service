@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.ReportCollReductionDao">
+	<select id="queryCollReductionModelList" resultType="com.cloud.collection.model.ReportCollReductionModel">
+		SELECT
+	        a.*
+        FROM
+	        report_collection_reduction AS a
+        WHERE
+	        NOT EXISTS (
+		        SELECT
+			        *
+		        FROM
+			        report_collection_reduction
+		        WHERE
+			        collector_id = a.collector_id
+		        AND appoint_case_date > a.appoint_case_date
+	        ) AND a.`status` = 1
+        <if test="collectorId != null and collectorId != ''">
+              AND a.collector_id = #{collectorId}
+        </if>
+        <if test="appointCaseDate != null and appointCaseDate != ''">
+              AND a.appoint_case_date = #{appointCaseDate}
+        </if>
+	</select>
+
+</mapper>

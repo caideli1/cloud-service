@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.StockUserOrderDao">
+    <insert id="saveStockUserOrder" parameterType="com.cloud.order.model.StockUserOrderModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO stock_user_order (
+	`order_num`,
+	`apply_num`,
+	`mobile`,
+	`user_id`,
+	`user_name`,
+	`audit_time`,
+	`source_type`,
+	`create_time`,
+	`update_time`
+    )
+    VALUES
+	(
+		#{orderNum},
+		#{applyNum},
+		#{mobile},
+		#{userId},
+		#{userName},
+		#{auditTime},
+		#{sourceType},
+		NOW(),
+		NOW()
+    )
+    </insert>
+
+    <select id="selectByParams" parameterType="com.cloud.order.model.req.StockUserOrderReq" resultType="com.cloud.order.model.StockUserOrderModel">
+        select
+        suo.order_num,
+        suo.mobile,
+        suo.user_name,
+        suo.audit_time,
+        suo.source_type,
+        uo.id AS orderId,
+        uo.check_status AS checkStatus
+        from stock_user_order suo
+        LEFT JOIN user_order uo ON uo.order_num = suo.order_num
+        <where>
+            suo.id IN (select max(id) id from stock_user_order group by user_id)
+            AND is_valid = 1
+            <if test="orderNum != null and orderNum != ''">
+                AND instr(CONCAT('MN', suo.order_num,'PD'),#{orderNum}) &gt; 0
+            </if>
+            <if test="userName != null and userName != ''">
+                <bind name="_userName" value="'%' + userName + '%'"/>
+                AND suo.user_name like #{_userName}
+            </if>
+            <if test="mobile != null and mobile != ''">
+                AND suo.mobile = #{mobile}
+            </if>
+            <if test="sourceType != null">
+                AND suo.source_type = #{sourceType}
+            </if>
+        </where>
+    </select>
+</mapper>

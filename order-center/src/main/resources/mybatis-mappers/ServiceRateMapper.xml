@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.ServiceRateDao">
+
+    <select id="getServiceRateModelList" resultType="com.cloud.order.model.ServiceRateModel">
+		SELECT
+			id,
+			name,
+			total_rate,
+			create_time,
+			create_user
+		FROM
+			product_service_rate
+		WHERE
+			is_deleted = 0
+			<if test="name != null and name != ''">
+                AND name LIKE CONCAT('%',#{name},'%')
+            </if>
+    </select>
+
+    <select id="getServiceRateDetail" resultType="com.cloud.order.model.resp.ServiceRateDetailRes">
+    	SELECT
+			psr.id,
+			psr.name,
+		    psr.gst,
+			psr.total_rate
+		FROM
+			product_service_rate psr
+		WHERE
+			psr.id = #{id}
+    </select>
+
+	<update id="deleteServiceRate">
+		update product_service_rate
+		set is_deleted = id
+		where id = #{id}
+	</update>
+
+	<insert id="addServiceRate" parameterType="com.cloud.order.model.ServiceRateModel" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO
+			product_service_rate (name, gst, total_rate, create_time, create_user, update_time, update_user)
+		VALUES (#{name}, #{gst}, #{totalRate}, #{createTime}, #{createUser}, #{updateTime}, #{updateUser})
+	</insert>
+
+	<update id="updateServiceRate" parameterType="com.cloud.order.model.ServiceRateModel">
+		update product_service_rate
+		<set>
+			<if test="name != null and name != ''">
+				name = #{name},
+			</if>
+			<if test="gst != null">
+				gst = #{gst},
+			</if>
+			<if test="totalRate != null">
+				total_rate = #{totalRate},
+			</if>
+			<if test="updateUser != null and updateUser != ''">
+				update_user = #{updateUser},
+			</if>
+			<if test="updateTime != null">
+				update_time = #{updateTime},
+			</if>
+		</set>
+		where id = #{id}
+	</update>
+</mapper>

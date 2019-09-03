@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.UserBankCardDao">
+
+    <update id="updateBankCardInfo">
+        update user_bank_card
+        <set>
+            verify_return_name = #{verifyReturnName}
+        </set>
+        <where>
+            <if test="bankAccount != null and bankAccount != ''">
+                   AND bank_account = #{bankAccount}
+            </if>
+            <if test="ifsc != null and ifsc != ''">
+                   AND ifsc_code = #{ifsc}
+            </if>
+        </where>
+    </update>
+
+</mapper>

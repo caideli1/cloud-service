@@ -1,0 +1,1330 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.AppUserInfoDao">
+    <!--插入user_body_img-->
+    <insert id="saveLiveData" parameterType="com.cloud.model.appUser.AppUserImgInfo" useGeneratedKeys="true"
+            keyProperty="id">
+
+        INSERT INTO user_body_img
+        (
+            user_id,
+         face_img,
+            face_pdf,
+         create_time)
+            VALUES (
+                       #{userId},
+                    #{faceImg},
+                    #{facePdf},
+                    #{createTime}
+            )
+    </insert>
+
+    <update id="updateById" parameterType="com.cloud.model.appUser.AppUserBasicInfo">
+        update user_info i
+        <set>
+            <if test="firstName != null and firstName != ''">
+                i.first_name = #{firstName,jdbcType=VARCHAR},
+            </if>
+            <if test="lastName != null and lastName != ''">
+                i.last_name = #{lastName,jdbcType=VARCHAR},
+            </if>
+            <if test="sex != null">
+                i.sex = #{sex},
+            </if>
+            <if test="cellPhone != null and cellPhone != ''">
+                i.cell_phone = #{cellPhone,jdbcType=VARCHAR},
+            </if>
+            <if test="email != null and email != ''">
+                i.email = #{email,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                i.status = #{status,jdbcType=BIT},
+            </if>
+            <if test="birthday != null">
+                i.birthday = #{birthday,jdbcType=DATE},
+            </if>
+            <if test="marriageStatus != null">
+                i.marriage_status = #{marriageStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="studentStatus != null">
+                i.student_status = #{studentStatus,jdbcType=BIT},
+            </if>
+            <if test="channel != null and channel != ''">
+                i.channel = #{channel,jdbcType=VARCHAR},
+            </if>
+            <if test="religion != null and religion != ''">
+                i.religion = #{religion,jdbcType=VARCHAR},
+            </if>
+            <if test="inviteCount != null">
+                i.invite_count = #{inviteCount,jdbcType=INTEGER},
+            </if>
+            <if test="aadhaarAccount != null and aadhaarAccount != ''">
+                i.aadhaar_account = #{aadhaarAccount,jdbcType=VARCHAR},
+            </if>
+            <if test="aadhaarUrlFront != null and aadhaarUrlFront != ''">
+                i.aadhaar_url_front = #{aadhaarUrlFront,jdbcType=VARCHAR},
+            </if>
+            <if test="aadhaarUrlBack != null and aadhaarUrlBack != ''">
+                i.aadhaar_url_back = #{aadhaarUrlBack,jdbcType=VARCHAR},
+            </if>
+            <if test="aadhaarPdfFront != null and aadhaarPdfFront != ''">
+                i.aadhaar_pdf_front = #{aadhaarPdfFront,jdbcType=VARCHAR},
+            </if>
+            <if test="aadhaarPdfBack != null and aadhaarPdfBack != ''">
+                i.aadhaar_pdf_back = #{aadhaarPdfBack,jdbcType=VARCHAR},
+            </if>
+            <if test="loanPurpose != null and loanPurpose != ''">
+                i.loan_purpose = #{loanPurpose,jdbcType=VARCHAR},
+            </if>
+            <if test="postcode != null and postcode != ''">
+                i.postcode = #{postcode,jdbcType=VARCHAR},
+            </if>
+            <if test="isIdentified != null">
+                i.is_identified = #{isIdentified,jdbcType=BIT},
+            </if>
+            <if test="match != null">
+                i.`match` = #{match,jdbcType=TINYINT},
+            </if>
+            <if test="matchScore != null and matchScore != ''">
+                i.match_score = #{matchScore,jdbcType=VARCHAR},
+            </if>
+            <if test="bankStatementUrl != null and bankStatementUrl != ''">
+                i.bank_statement_url = #{bankStatementUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="bankStatementPdf != null and bankStatementPdf != ''">
+                i.bank_statement_pdf = #{bankStatementPdf,jdbcType=VARCHAR},
+            </if>
+            <if test="profileUrl != null and profileUrl != ''">
+                i.profile_url = #{profileUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="updateTime != null">
+                i.update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="aadhaarHouse != null and aadhaarHouse != ''">
+                i.aadhaar_house = #{aadhaarHouse},
+            </if>
+            <if test="aadhaarStreet != null and aadhaarStreet != ''">
+                i.aadhaar_street = #{aadhaarStreet},
+            </if>
+            <if test="aadhaarVtc != null and aadhaarVtc != ''">
+                i.aadhaar_vtc = #{aadhaarVtc},
+            </if>
+            <if test="aadhaarLoc != null and aadhaarLoc != ''">
+                i.aadhaar_loc = #{aadhaarLoc},
+            </if>
+            <if test="aadhaarPo != null and aadhaarPo != ''">
+                i.aadhaar_po = #{aadhaarPo},
+            </if>
+            <if test="aadhaarDist != null and aadhaarDist != ''">
+                i.aadhaar_dist = #{aadhaarDist},
+            </if>
+            <if test="aadhaarSubdist != null and aadhaarSubdist != ''">
+                i.aadhaar_subdist = #{aadhaarSubdist},
+            </if>
+            <if test="aadhaarState != null and aadhaarState != ''">
+                i.aadhaar_state = #{aadhaarState},
+            </if>
+            <if test="renewalState != null and renewalState != ''">
+                i.renewal_state = #{renewalState},
+            </if>
+        </set>
+        where i.id = #{id,jdbcType=INTEGER}
+    </update>
+
+    <select id="getByMobile" parameterType="java.lang.String" resultType="com.cloud.model.appUser.AppUserBasicInfo">
+        select * from
+        user_info
+        where cell_phone = #{cellPhone}
+    </select>
+
+    <select id="getByUserId" resultType="com.cloud.model.appUser.AppUserBasicInfo">
+        select * from
+            user_info
+        where id = #{id}
+    </select>
+
+    <select id="getUserStatus" resultType="java.lang.Integer">
+        select student_status from
+            user_info
+        where id = #{userId}
+    </select>
+
+    <select id="getNewBankCardInfo" resultType="com.cloud.model.appUser.AppUserBank">
+        select * from
+            user_bank_card
+        where user_id = #{userId}
+        order by binding_time desc
+        limit 1
+    </select>
+
+    <select id="getUserExpand" resultType="com.cloud.model.appUser.AppUserJobInfo">
+        select * from
+            user_info_expand
+        where user_id = #{userId}
+                order by id desc
+        limit 1
+    </select>
+
+    <select id="getUserAllContact" resultType="com.cloud.model.appUser.AppUserContact">
+        select * from
+        user_contact
+        where user_id = #{userId}
+        order by  create_time desc
+    </select>
+
+    <update id="updateWorkCardById">
+        update user_info_expand set work_card = ''
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteContactById">
+        delete from user_contact
+        where user_id = #{userId}  and   enabled_state=0
+    </delete>
+
+    <insert id="saveUserInfo" parameterType="com.cloud.model.appUser.AppUserJobInfo" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_info_expand
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="voterIdCard != null and voterIdCard != ''">
+                voter_id_card,
+            </if>
+            <if test="voterFrontUrl != null and voterFrontUrl != ''">
+                voter_front_url,
+            </if>
+            <if test="voterBackUrl != null and voterBackUrl != ''">
+                voter_back_url,
+            </if>
+            <if test="voterFrontPdf != null and voterFrontPdf != ''">
+                voter_front_pdf,
+            </if>
+            <if test="voterBackPdf != null and voterBackPdf != ''">
+                voter_back_pdf,
+            </if>
+            <if test="facebookAccount != null">
+                facebook_account,
+            </if>
+            <if test="whatsappAccount != null">
+                whatsapp_account,
+            </if>
+            <if test="skypeAccount != null">
+                skype_account,
+            </if>
+            <if test="pancardAccount != null">
+                pancard_account,
+            </if>
+            <if test="school != null">
+                school,
+            </if>
+            <if test="educationDegree != null">
+                education_degree,
+            </if>
+            <if test="profession != null">
+                profession,
+            </if>
+            <if test="position != null">
+                position,
+            </if>
+            <if test="companyName != null">
+                company_name,
+            </if>
+            <if test="workYear != null">
+                work_year,
+            </if>
+            <if test="workCard != null">
+                work_card,
+            </if>
+            <if test="specialty != null">
+                specialty,
+            </if>
+            <if test="enrollmentYear != null">
+                enrollment_year,
+            </if>
+            <if test="alimony != null">
+                alimony,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="payday != null">
+                payday,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                #{userId},
+            </if>
+            <if test="voterIdCard != null and voterIdCard != ''">
+                #{voterIdCard},
+            </if>
+            <if test="voterFrontUrl != null and voterFrontUrl != ''">
+                #{voterFrontUrl},
+            </if>
+            <if test="voterBackUrl != null and voterBackUrl != ''">
+                #{voterBackUrl},
+            </if>
+            <if test="voterFrontPdf != null and voterFrontPdf != ''">
+                #{voterFrontPdf},
+            </if>
+            <if test="voterBackPdf != null and voterBackPdf != ''">
+                #{voterBackPdf},
+            </if>
+            <if test="facebookAccount != null">
+                #{facebookAccount},
+            </if>
+            <if test="whatsappAccount != null">
+                #{whatsappAccount},
+            </if>
+            <if test="skypeAccount != null">
+                #{skypeAccount},
+            </if>
+            <if test="pancardAccount != null">
+                #{pancardAccount},
+            </if>
+            <if test="school != null">
+                #{school},
+            </if>
+            <if test="educationDegree != null">
+                #{educationDegree},
+            </if>
+            <if test="profession != null">
+                #{profession},
+            </if>
+            <if test="position != null">
+                #{position},
+            </if>
+            <if test="companyName != null">
+                #{companyName},
+            </if>
+            <if test="workYear != null">
+                #{workYear},
+            </if>
+            <if test="workCard != null">
+                #{workCard},
+            </if>
+            <if test="specialty != null">
+                #{specialty},
+            </if>
+            <if test="enrollmentYear != null">
+                #{enrollmentYear},
+            </if>
+            <if test="alimony != null">
+                #{alimony},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="payday != null">
+                #{payday},
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="saveAddress" parameterType="com.cloud.model.appUser.AppUserAddressInfo" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_address
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="companyPhone != null">
+                company_phone,
+            </if>
+            <if test="addressDetail != null">
+                address_detail,
+            </if>
+            <if test="state != null">
+                state,
+            </if>
+            <if test="district != null">
+                district,
+            </if>
+            <if test="county != null">
+                county,
+            </if>
+            <if test="town != null">
+                town,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="addressType != null">
+                address_type,
+            </if>
+            <if test="status != null">
+                status,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                #{userId},
+            </if>
+            <if test="companyPhone != null">
+                #{companyPhone},
+            </if>
+            <if test="addressDetail != null">
+                #{addressDetail},
+            </if>
+            <if test="state != null">
+                #{state},
+            </if>
+            <if test="district != null">
+                #{district},
+            </if>
+            <if test="county != null">
+                #{county},
+            </if>
+            <if test="town != null">
+                #{town},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="addressType != null">
+                #{addressType},
+            </if>
+            <if test="status != null">
+                #{status},
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="saveUserSalary" parameterType="com.cloud.model.appUser.AppUserSalary" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_salary
+        (user_id,
+         salary,
+         create_time)
+        VALUES (
+                   #{userId},
+                   #{salary},
+                   #{createTime}
+               )
+    </insert>
+
+    <insert id="saveUserContact" parameterType="com.cloud.model.appUser.AppUserContact" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_contact
+        (user_id,
+         name,
+         relation,
+         phone,
+         create_time,
+         enabled_state
+         )
+        VALUES (
+                   #{userId},
+                   #{name},
+                   #{relation},
+                   #{phone},
+                   #{createTime},
+                   #{enabledState}
+               )
+    </insert>
+
+    <insert id="saveBankInfo" parameterType="com.cloud.model.appUser.AppUserBank" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_bank_card
+        (user_id,
+         account_name,
+         bank_name,
+         bank_account,
+         ifsc_code,
+         status,
+         binding_time)
+        VALUES (
+                   #{userId},
+                   #{accountName},
+                   #{bankName},
+                   #{bankAccount},
+                   #{ifscCode},
+                   #{status},
+                   #{bindingTime}
+               )
+    </insert>
+
+    <insert id="saveLoanInfo" parameterType="com.cloud.model.appUser.AppUserLoanInfo" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_loan
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="productId != null">
+                product_id,
+            </if>
+            <if test="loanNumber != null">
+                loan_number,
+            </if>
+            <if test="userName != null">
+                user_name,
+            </if>
+            <if test="userPhone != null">
+                user_phone,
+            </if>
+            <if test="overdueDay != null">
+                overdue_day,
+            </if>
+            <if test="loanChannel != null">
+                loan_channel,
+            </if>
+            <if test="borrowAmount != null">
+                borrow_amount,
+            </if>
+            <if test="loanMoneyAmount != null">
+                loan_money_amount,
+            </if>
+            <if test="shouldRepayAmount != null">
+                should_repay_amount,
+            </if>
+            <if test="paidTotalAmount != null">
+                paid_total_amount,
+            </if>
+            <if test="lateCharge != null">
+                late_charge,
+            </if>
+            <if test="deferDisbursement != null">
+                defer_disbursement,
+            </if>
+            <if test="overdueStatus != null">
+                overdue_status,
+            </if>
+            <if test="loanStatus != null">
+                loan_status,
+            </if>
+            <if test="balanceDateStatus != null">
+                balance_date_status,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="balanceDate != null">
+                balance_date,
+            </if>
+            <if test="overdueStartDate != null">
+                overdue_start_date,
+            </if>
+            <if test="extensionDueDate != null">
+                extension_due_date,
+            </if>
+            <if test="realClosingDate != null">
+                real_closing_date,
+            </if>
+            <if test="loanEndDate != null">
+                loan_end_date,
+            </if>
+            <if test="loanStartDate != null">
+                loan_start_date,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                #{userId},
+            </if>
+            <if test="productId != null">
+                #{productId},
+            </if>
+            <if test="loanNumber != null">
+                #{loanNumber},
+            </if>
+            <if test="userName != null">
+                #{userName},
+            </if>
+            <if test="userPhone != null">
+                #{userPhone},
+            </if>
+            <if test="overdueDay != null">
+                #{overdueDay},
+            </if>
+            <if test="loanChannel != null">
+                #{loanChannel},
+            </if>
+            <if test="borrowAmount != null">
+                #{borrowAmount},
+            </if>
+            <if test="loanMoneyAmount != null">
+                #{loanMoneyAmount},
+            </if>
+            <if test="shouldRepayAmount != null">
+                #{shouldRepayAmount},
+            </if>
+            <if test="paidTotalAmount != null">
+                #{paidTotalAmount},
+            </if>
+            <if test="lateCharge != null">
+                #{lateCharge},
+            </if>
+            <if test="deferDisbursement != null">
+                #{deferDisbursement},
+            </if>
+            <if test="overdueStatus != null">
+                #{overdueStatus},
+            </if>
+            <if test="loanStatus != null">
+                #{loanStatus},
+            </if>
+            <if test="balanceDateStatus != null">
+                #{balanceDateStatus},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="balanceDate != null">
+                #{balanceDate},
+            </if>
+            <if test="overdueStartDate != null">
+                #{overdueStartDate},
+            </if>
+            <if test="extensionDueDate != null">
+                #{extensionDueDate},
+            </if>
+            <if test="realClosingDate != null">
+                #{realClosingDate},
+            </if>
+            <if test="loanEndDate != null">
+                #{loanEndDate},
+            </if>
+            <if test="loanStartDate != null">
+                #{loanStartDate},
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="addUserInfo" parameterType="com.cloud.model.appUser.AppUserBasicInfo" useGeneratedKeys="true"
+            keyProperty="id">
+    
+    INSERT INTO  user_info (cell_phone,birthday,update_time,register_time) VALUES (#{cellPhone},NOW(),NOW(),NOW());
+    </insert>
+
+    <update id="updateUserInfo" parameterType="com.cloud.model.appUser.AppUserJobInfo">
+        update user_info_expand
+        <set>
+            <if test="voterIdCard != null and voterIdCard != ''">
+                voter_id_card = #{voterIdCard,jdbcType=VARCHAR},
+            </if>
+            <if test="voterFrontUrl != null and voterFrontUrl != ''">
+                voter_front_url = #{voterFrontUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="voterBackUrl != null and voterBackUrl != ''">
+                voter_back_url = #{voterBackUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="voterFrontPdf != null and voterFrontPdf != ''">
+                voter_front_pdf = #{voterFrontPdf,jdbcType=VARCHAR},
+            </if>
+            <if test="voterBackPdf != null and voterBackPdf != ''">
+                voter_back_pdf = #{voterBackPdf,jdbcType=VARCHAR},
+            </if>
+            <if test="electorsName != null and electorsName != ''">
+                electors_name = #{electorsName,jdbcType=VARCHAR},
+            </if>
+            <if test="relationsName != null and relationsName != ''">
+                relations_name = #{relationsName,jdbcType=VARCHAR},
+            </if>
+            <if test="facebookAccount != null and facebookAccount != ''">
+                facebook_account = #{facebookAccount,jdbcType=VARCHAR},
+            </if>
+            <if test="whatsappAccount != null and whatsappAccount != ''">
+                whatsapp_account = #{whatsappAccount,jdbcType=VARCHAR},
+            </if>
+            <if test="skypeAccount != null and skypeAccount != ''">
+                skype_account = #{skypeAccount,jdbcType=VARCHAR},
+            </if>
+            <if test="pancardAccount != null and pancardAccount != ''">
+                pancard_account = #{pancardAccount,jdbcType=VARCHAR},
+            </if>
+            <if test="school != null and school != ''">
+                school = #{school,jdbcType=VARCHAR},
+            </if>
+            <if test="educationDegree != null and educationDegree != ''">
+                education_degree = #{educationDegree,jdbcType=VARCHAR},
+            </if>
+            <if test="profession != null and profession != ''">
+                profession = #{profession,jdbcType=VARCHAR},
+            </if>
+            <if test="position != null and position != ''">
+                position = #{position,jdbcType=VARCHAR},
+            </if>
+            <if test="companyName != null and companyName != ''">
+                company_name = #{companyName,jdbcType=VARCHAR},
+            </if>
+            <if test="workYear != null and workYear != ''">
+                work_year = #{workYear,jdbcType=VARCHAR},
+            </if>
+            <if test="workCard != null and workCard != ''">
+                work_card = #{workCard,jdbcType=VARCHAR},
+            </if>
+            <if test="specialty != null and specialty != ''">
+                specialty = #{specialty,jdbcType=VARCHAR},
+            </if>
+            <if test="enrollmentYear != null and enrollmentYear != ''">
+                enrollment_year = #{enrollmentYear,jdbcType=VARCHAR},
+            </if>
+            <if test="alimony != null and alimony != ''">
+                alimony = #{alimony,jdbcType=VARCHAR},
+            </if>
+            <if test="payday != null and payday != ''">
+                payday = #{payday,jdbcType=VARCHAR},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where user_id = #{userId,jdbcType=INTEGER}
+    </update>
+
+    <insert id="saveUserOrder" parameterType="com.cloud.model.appUser.AppUserOrderInfo" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderNum != null">
+                order_num,
+            </if>
+            <if test="applyNum != null">
+                apply_num,
+            </if>
+            <if test="managerId != null">
+                manager_id,
+            </if>
+            <if test="auditorId != null">
+                auditor_id,
+            </if>
+            <if test="checkStatus != null">
+                check_status,
+            </if>
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="productId != null">
+                product_id,
+            </if>
+            <if test="loanAmount != null">
+                loan_amount,
+            </if>
+            <if test="userPhone != null">
+                user_phone,
+            </if>
+            <if test="userName != null">
+                user_name,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="signatureUrl != null and signatureUrl != ''">
+                signature_url,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderNum != null">
+                #{orderNum},
+            </if>
+            <if test="applyNum != null">
+                #{applyNum},
+            </if>
+            <if test="managerId != null">
+                #{managerId},
+            </if>
+            <if test="auditorId != null">
+                #{auditorId},
+            </if>
+            <if test="checkStatus != null">
+                #{checkStatus},
+            </if>
+            <if test="userId != null">
+                #{userId},
+            </if>
+            <if test="productId != null">
+                #{productId},
+            </if>
+            <if test="loanAmount != null">
+                #{loanAmount},
+            </if>
+            <if test="userPhone != null">
+                #{userPhone},
+            </if>
+            <if test="userName != null">
+                #{userName},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="signatureUrl != null and signatureUrl != ''">
+                #{signatureUrl},
+            </if>
+        </trim>
+    </insert>
+
+    <select id="getBasicById" resultType="com.cloud.model.appUser.AppUserBasicInfo">
+        select * from user_info
+        where id = #{userId}
+    </select>
+
+    <select id="getUserIdentityInfo"
+            resultType="com.cloud.model.appUser.AppUserJobInfo">
+        SELECT
+            school,
+            education_degree AS educationDegree,
+            profession,
+            POSITION,
+            company_name AS companyName,
+            work_year AS workYear,
+            work_card AS workCard,
+            specialty,
+            enrollment_year AS enrollmentYear,
+            alimony,
+            a.user_id AS userId,
+            a.company_phone AS companyPhone,
+            a.address_detail AS addressDetail,
+            a.state,
+            a.district,
+            a.county,
+            a.town,
+            a.address_type AS addressType,
+            s.salary,
+            s.create_time as createTime
+        FROM
+            user_info_expand e
+                LEFT JOIN
+                user_address a
+                ON e.user_id = a.user_id
+                LEFT JOIN
+                user_salary s
+                ON e.user_id = s.user_id
+
+        WHERE e.user_id = #{userId}
+        ORDER BY s.create_time DESC
+    </select>
+
+    <select id="getContactInfoById"
+            resultType="com.cloud.model.appUser.AppUserContact">
+        select
+        id,
+        user_id as userId,
+               name,
+               relation,
+               phone
+        from user_contact
+        where user_id = #{userId} and enabled_state=0
+        order by create_time
+    </select>
+
+    <select id="getBankInfoById" resultType="com.cloud.model.appUser.AppUserBank">
+        select
+        id,
+            user_id as userId,
+            bank_name as bankName,
+            bank_account as bankAccount,
+            ifsc_code as ifscCode,
+            status
+        from user_bank_card
+        where user_id = #{userId}
+        order by binding_time desc
+        limit 1
+    </select>
+
+    <update id="updateBankInfo">
+        update user_bank_card
+        set status = 0
+        where user_id = #{userId,jdbcType=INTEGER}
+    </update>
+
+    <select id="getOrderById" resultType="com.cloud.model.appUser.AppUserOrderInfo">
+        select order_num as orderNum,
+               apply_num as applyNum,
+               check_status as checkStatus,
+               update_time as updateTime,
+               final_audit_time as finalAuditTime,
+               is_stock as  isStock,
+               loan_amount
+              from user_order
+        where user_id = #{userId}
+        order by create_time desc
+        limit 1
+    </select>
+
+    <select id="getLoanByLoanNum" parameterType="java.lang.String" resultType="com.cloud.model.appUser.AppUserLoanInfo">
+        select overdue_status as overdueStatus,
+               loan_status as loanStatus
+        from user_loan
+        where loan_number = #{applyNum}
+    </select>
+
+    <select id="getUserDetailById"
+            resultType="com.cloud.model.appUser.UserBindCardStatus">
+        select i.aadhaar_account  as aadhaarAccount,
+               e.voter_id_card    as voterIdCard,
+               e.pancard_account  as pancardAccount,
+               e.facebook_account as facebookAccount,
+               e.whatsapp_account as whatsappAccount,
+               e.skype_account    as skypeAccount,
+               e.update_time as updateTime,
+               i.update_time  as userUpdateTime
+        from user_info i
+        LEFT JOIN user_info_expand e
+        ON i.id = e.user_id
+        WHERE i.id = #{userId}
+    </select>
+
+    <select id="queryFAQInfo" resultType="com.cloud.model.appUser.AppFAQInfo">
+        select id,
+               answer_title as answerTitle,
+               answer_type as answerType
+        from platform_answer_model
+        where status = 1
+    </select>
+
+    <select id="queryFAQDetailById" resultType="com.cloud.model.appUser.AppFAQInfo">
+    select id,
+           answer_title as answerTitle,
+           answer_context as answerContext,
+           answer_type as answerType
+    from platform_answer_model
+    where id = #{id}
+      and status = 1
+</select>
+
+    <select id="getOrderByOrderNum" parameterType="java.lang.String"
+            resultType="com.cloud.model.appUser.AppUserOrderInfo">
+        select order_num as orderNum,
+               apply_num as applyNum,
+               user_id as userId
+        from user_order
+        where order_num = #{orderNum}
+    </select>
+
+    <select id="getBodyImgById" resultType="com.cloud.model.appUser.AppUserImgInfo">
+        select *
+        from user_body_img
+        where user_id = #{userId}
+        limit 1
+    </select>
+
+    <update id="updateLiveData" parameterType="com.cloud.model.appUser.AppUserImgInfo">
+        update user_body_img
+        set face_img = #{faceImg},
+            face_pdf = #{facePdf}
+        where user_id = #{userId}
+    </update>
+
+    <insert id="saveUserFeedback" parameterType="com.cloud.platform.model.PlatformUserFeedbackModel"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into platform_user_feedback
+        (answer_id,
+         user_id,
+         user_name,
+         user_mobile,
+         user_email,
+         feedback_type,
+         feedback_context,
+         feedback_date
+         )
+        VALUES (
+                   #{answerId},
+                   #{userId},
+                   #{userName},
+                   #{userMobile},
+                   #{userEmail},
+                   #{feedbackType},
+                   #{feedbackContext},
+                   now()
+               )
+    </insert>
+
+    <insert id="saveUserData" parameterType="com.cloud.model.user.UserDataStatisModel" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_data_statistics
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="startImi != null and startImi != ''">
+                start_imi,
+            </if>
+            <if test="loginImi != null and loginImi != ''">
+                login_imi,
+            </if>
+            <if test="channel != null">
+                channel,
+            </if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                #{userId},
+            </if>
+            <if test="startImi != null and startImi != ''">
+                #{startImi},
+            </if>
+            <if test="loginImi != null and loginImi != ''">
+                #{loginImi},
+            </if>
+            <if test="channel != null">
+                #{channel},
+            </if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateOrderTime">
+        update user_order
+        set
+            update_time = now()
+        where user_id = #{userId}
+    </update>
+
+    <select id="findUserData" parameterType="com.cloud.model.user.UserDataStatisModel"
+            resultType="com.cloud.model.user.UserDataStatisModel">
+        select * from user_data_statistics
+        where login_imi = #{loginImi}
+        and user_id = #{userId}
+        limit 1
+    </select>
+
+    <insert id="saveRepayMode" parameterType="com.cloud.user.model.AppUserRepayModeEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO user_repay_mode
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="mobile != null and mobile != ''">
+                mobile,
+            </if>
+            <if test="netbankingName != null and netbankingName != ''">
+                netbanking_name,
+            </if>
+            <if test="otherRepayMode != null and otherRepayMode != ''">
+                other_repay_mode,
+            </if>
+            <if test="repayMode != null">
+                repay_mode,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="updateTime != null">
+                update_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="mobile != null and mobile != ''">
+                #{mobile},
+            </if>
+            <if test="netbankingName != null and netbankingName != ''">
+                #{netbankingName},
+            </if>
+            <if test="otherRepayMode != null and otherRepayMode != ''">
+                #{otherRepayMode},
+            </if>
+            <if test="repayMode != null">
+                #{repayMode},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+            <if test="updateTime != null">
+                #{updateTime},
+            </if>
+        </trim>
+    </insert>
+    <select id="getUserAddressById" resultType="com.cloud.model.user.UserAddress">
+    select *  from  user_address     where   user_id=#{userId}
+
+    </select>
+
+    <select id="getAppUserImgInfoById" resultType="com.cloud.model.appUser.AppUserImgInfoReq">
+
+
+select  face_img ,face_pdf ,user_id from       user_body_img  where  user_id=#{userId}
+
+
+    </select>
+
+    <insert id="saveUserInfoHistory" parameterType="com.cloud.user.model.AppUserInfoHistoryEntity">
+        INSERT INTO user_info_history (
+        school_address_id,
+        order_no,
+        pan_card_id,
+        bank_id,
+        first_contact_id,
+        home_address_id,
+        company_address_id,
+        aadhaar_url_front,
+        aadhaar_url_back,
+        `match`,
+        voter_front_url,
+        voter_back_url,
+        sex,
+        mobile,
+        marriage_status,
+        is_student,
+        email,
+        aadhaar_account,
+        birthday,
+        facebook_account,
+        skype_account,
+        whatsapp_account,
+        religion,
+        voter_id_card,
+        postcode,
+        loan_purpose,
+        second_contact_id,
+        profession,
+        position,
+        company_name,
+        education_degree,
+        school,
+        work_year,
+        bank_statement_url,
+        work_card,
+        electors_name,
+        user_id,
+        salary_id,
+        face_img,
+        enrollment_year,
+        alimony,
+        relations_name,
+        specialty,
+        paydays
+        <if test="aadhaarHouse!=null and aadhaarHouse!=''">
+            ,
+            aadhaar_house
+        </if>
+        <if test="aadhaarStreet!=null and aadhaarStreet!=''">
+            ,
+            aadhaar_street
+        </if>
+        <if test="aadhaarLoc!=null and aadhaarLoc!=''">
+            ,
+            aadhaar_loc
+        </if>
+        <if test="aadhaarVtc!=null and aadhaarVtc!=''">
+            ,
+            aadhaar_vtc
+        </if>
+        <if test="aadhaarPo!=null and aadhaarPo!=''">
+            ,
+            aadhaar_po
+        </if>
+        <if test="aadhaarDist!=null and aadhaarDist!=''">
+            ,
+            aadhaar_dist
+        </if>
+        <if test="aadhaarSubdist!=null and aadhaarSubdist!=''">
+            ,
+            aadhaar_subdist
+        </if>
+        <if test="aadhaarState!=null and aadhaarState!=''">
+            ,
+            aadhaar_state
+        </if>
+        <if test="renewalState!=null and renewalState!=''">
+            ,
+            renewal_state
+        </if>
+        <if test="cardFrontUrlPan!=null and cardFrontUrlPan!=''">
+            ,
+            card_front_url_pan
+        </if>
+        <if test="cardBackUrlPan!=null and cardBackUrlPan!=''">
+            ,
+            card_back_url_pan
+        </if>
+        <if test="cardFrontPdfPan!=null and cardFrontPdfPan!=''">
+            ,
+            card_front_pdf_pan
+        </if>
+        <if test="holdsFullNamePan!=null and holdsFullNamePan!=''">
+            ,
+            holds_full_name_pan
+        </if>
+        <if test="fathersNamePan!=null and fathersNamePan!=''">
+            ,
+            fathers_name_pan
+        </if>
+        <if test="permanentNoPan!=null and permanentNoPan!=''">
+            ,
+            permanent_no_pan
+        </if>
+        <if test="isIdentifiedPan!=null and isIdentifiedPan!=''">
+            ,
+            is_identified_pan
+        </if>
+        <if test="birthdayPan!=null and birthdayPan!=''">
+            ,
+            birthday_pan
+        </if>
+        <if test="matchPan!=null and matchPan!=''">
+            ,
+            match_pan
+        </if>
+        <if test="matchScorePan!=null and matchScorePan!=''">
+            ,
+            match_score_pan
+        </if>
+        <if test="cardBackPdfPan!=null and cardBackPdfPan!=''">
+            ,
+            card_back_pdf_pan
+        </if>
+        )
+        VALUES
+        (#{schoolAddressId},
+        #{orderNo},
+        #{panCardId},
+        #{bankId},
+        #{firstContactId},
+        #{homeAddressId},
+        #{companyAddressId},
+        #{aadhaarUrlFront},
+        #{aadhaarUrlBack},
+        #{match},
+        #{voterFrontUrl},
+        #{voterBackUrl},
+        #{sex},
+        #{mobile},
+        #{marriageStatus},
+        #{isStudent},
+        #{email},
+        #{aadhaarAccount},
+        #{birthday},
+        #{facebookAccount},
+        #{skypeAccount},
+        #{whatsappAccount},
+        #{religion},
+        #{voterIdCard},
+        #{postCode},
+        #{loanPurpose},
+        #{secondContactId},
+        #{profession},
+        #{position},
+        #{companyName},
+        #{educationDegree},
+        #{school},
+        #{workYear},
+        #{bankStatementUrl},
+        #{workCard},
+        #{electorsName},
+        #{userId},
+        #{salaryId},
+        #{faceImg},
+        #{enrollmentYear},
+        #{alimony},
+        #{relationsName},
+        #{specialty},
+        #{paydays}
+        <if test="aadhaarHouse!=null and aadhaarHouse!=''">
+            ,
+            #{aadhaarHouse}
+        </if>
+        <if test="aadhaarStreet!=null and aadhaarStreet!=''">
+            ,
+            #{aadhaarStreet}
+        </if>
+        <if test="aadhaarLoc!=null and aadhaarLoc!=''">
+            ,
+            #{aadhaarLoc}
+        </if>
+        <if test="aadhaarVtc!=null and aadhaarVtc!=''">
+            ,
+            #{aadhaarVtc}
+        </if>
+        <if test="aadhaarPo!=null and aadhaarPo!=''">
+            ,
+            #{aadhaarPo}
+        </if>
+        <if test="aadhaarDist!=null and aadhaarDist!=''">
+            ,
+            #{aadhaarDist}
+        </if>
+        <if test="aadhaarSubdist!=null and aadhaarSubdist!=''">
+            ,
+            #{aadhaarSubdist}
+        </if>
+        <if test="aadhaarState!=null and aadhaarState!=''">
+            ,
+            #{aadhaarState}
+        </if>
+        <if test="renewalState!=null and renewalState!=''">
+            ,
+            #{renewalState}
+        </if>
+
+        <if test="cardFrontUrlPan!=null and cardFrontUrlPan!=''">
+            ,
+            #{cardFrontUrlPan}
+        </if>
+        <if test="cardBackUrlPan!=null and cardBackUrlPan!=''">
+            ,
+            #{cardBackUrlPan}
+        </if>
+        <if test="cardFrontPdfPan!=null and cardFrontPdfPan!=''">
+            ,
+            #{cardFrontPdfPan}
+        </if>
+        <if test="holdsFullNamePan!=null and holdsFullNamePan!=''">
+            ,
+            #{holdsFullNamePan}
+        </if>
+        <if test="fathersNamePan!=null and fathersNamePan!=''">
+            ,
+            #{fathersNamePan}
+        </if>
+        <if test="permanentNoPan!=null and permanentNoPan!=''">
+            ,
+            #{permanentNoPan}
+        </if>
+        <if test="isIdentifiedPan!=null and isIdentifiedPan!=''">
+            ,
+            #{isIdentifiedPan}
+        </if>
+        <if test="birthdayPan!=null and birthdayPan!=''">
+            ,
+            #{birthdayPan}
+        </if>
+        <if test="matchPan!=null and matchPan!=''">
+            ,
+            #{matchPan}
+        </if>
+        <if test="matchScorePan!=null and matchScorePan!=''">
+            ,
+            #{matchScorePan}
+        </if>
+        <if test="cardBackPdfPan!=null and cardBackPdfPan!=''">
+            ,
+            #{cardBackPdfPan}
+        </if>
+
+
+        )
+
+    </insert>
+
+    <select id="queryOrderHistoryByUserId" resultType="com.cloud.user.model.AppUserInfoHistoryEntity">
+
+        select  *  from  user_info_history  where   user_id=#{userId}
+
+    </select>
+
+    <update id="updateOrderHistoryBankIdById" parameterType="com.cloud.user.model.AppUserInfoHistoryEntity">
+        update  user_info_history   set  bank_id=#{bankId}
+        where id=#{id}
+    </update>
+
+    <update id="updateOrderHistorySalaryIdById" parameterType="com.cloud.user.model.AppUserInfoHistoryEntity">
+        update user_info_history
+        <set>
+            <if test="salaryId!=null and  salaryId!='' and salaryId!=0">
+                salary_id=#{salaryId}
+            </if>
+
+
+        </set>
+        where id=#{id}
+    </update>
+    <update id="setUserContactEnable">
+        update  user_contact
+         set enabled_state=#{enabledState}
+        where
+        id=#{id}
+    </update>
+</mapper>

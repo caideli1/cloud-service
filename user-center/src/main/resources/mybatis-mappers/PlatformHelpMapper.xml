@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.platform.dao.PlatformHelpDao">
+
+    <select id="getPlatformAnswer" parameterType="Map" resultType="com.cloud.platform.model.PlatformAnswerModelModel">
+        select * from platform_answer_model
+        <where>
+            status = 1
+            <if test="answerType != null and answerType != ''">
+                and answer_type = #{answerType}
+            </if>
+            <if test="answerTitle != null and answerTitle != ''">
+                and answer_title like concat('%',#{answerTitle},'%')
+            </if>
+            <if test="answerId !=null and answerId != ''">
+                and  id = #{answerId}
+
+            </if>
+        </where>
+    </select>
+
+    <insert id="createPlatformAnswer" parameterType="com.cloud.platform.model.PlatformAnswerModelModel">
+        insert into platform_answer_model
+        (answer_title, answer_context, answer_type) VALUES
+        (#{answerTitle},#{answerContext},#{answerType})
+    </insert>
+
+    <update id="deletePlatformAnswer">
+        update platform_answer_model
+        set status = 0
+        where id in (${id})
+    </update>
+
+    <update id="updatePlatformAnswer" parameterType="com.cloud.platform.model.PlatformAnswerModelModel">
+        update platform_answer_model
+        set answer_title = #{answerTitle},
+            answer_context = #{answerContext},
+            answer_type = #{answerType}
+        where id = #{id}
+    </update>
+
+    <select id="getPlatformUserFeedback" parameterType="Map" resultType="com.cloud.platform.model.PlatformUserFeedbackModel">
+        select * from platform_user_feedback
+        <where>
+            1=1
+            <if test="feedbackType != null and feedbackType != '' ">
+                and feedback_type = #{feedbackType}
+            </if>
+            <if test="processStatus != null and processStatus != '' ">
+                and process_status = #{processStatus}
+            </if>
+            <if test="startProcessDate != null and startProcessDate != '' ">
+                and date_format(process_date,'%Y-%m-%d') &gt;= #{startProcessDate}
+            </if>
+            <if test="endProcessDate != null and endProcessDate != '' ">
+                and date_format(process_date,'%Y-%m-%d') &lt;= #{endProcessDate}
+            </if>
+        </where>
+    </select>
+
+    <insert id="createPlatformProcessedFeedback" parameterType="com.cloud.platform.model.PlatformProcessedFeedbackModel">
+        insert into platform_processed_feedback
+        (feedback_id, process_user,
+         process_type, process_context,
+          create_time)
+         VALUES (
+        #{feedbackId},#{processUser},
+        #{processType},#{processContext},
+        now()
+        )
+    </insert>
+
+    <select id="getPlatformProcessedFeedback" resultType="com.cloud.platform.model.PlatformProcessedFeedbackModel">
+        select * from platform_processed_feedback
+        where feedback_id = #{id}
+    </select>
+
+    <update id="markPlatformUserFeedback">
+        update platform_user_feedback
+        set  process_status = 2,process_date= #{processDate}
+        where id = #{id}
+    </update>
+
+    <select id="getPlatformUserFeedbackById" resultType="com.cloud.platform.model.PlatformUserFeedbackModel">
+        select * from platform_user_feedback
+        where id = #{id}
+    </select>
+</mapper>

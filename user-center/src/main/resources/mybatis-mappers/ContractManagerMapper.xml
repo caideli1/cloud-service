@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.platform.dao.ContractManagerDao">
+
+    <select id="getContract" parameterType="Map" resultType="com.cloud.platform.model.PlatformContractModel">
+        select a.*,group_concat(c.id order by c.id separator ' ') tagIds, group_concat( c.tag_name order by c.id separator ' ') tagNames from platform_contract a
+        left join platform_contract_tag b on a.id=b.contract_id
+        left join platform_tags c on b.tag_id = c.id
+        <where>
+            a.is_delete = 0
+            <if test="contractName != null and contractName != ''">
+                and a.contract_name like concat('%',#{contractName},'%')
+            </if>
+            <if test="contractStatus != null and contractStatus != ''">
+                and a.contract_status = #{contractStatus}
+            </if>
+            <if test="businessStatus != null and businessStatus != '' ">
+                and a.business_status = #{businessStatus}
+            </if>
+        </where>
+        group by a.id
+        order by a.create_time desc
+    </select>
+
+    <insert id="addContract" parameterType="com.cloud.platform.model.PlatformContractModel" useGeneratedKeys="true" keyProperty="id">
+        insert into platform_contract
+        (contract_name, contract_status, contract_src,
+         contract_due_date, process_user, create_time,
+          business_status, company_name,contract_start_date)
+        VALUES
+        (#{contractName},#{contractStatus},#{contractSrc},
+        #{contractDueDate},#{processUser},now(),
+        #{businessStatus},#{companyName},#{contractStartDate})
+    </insert>
+
+    <insert id="insertContractTags" parameterType="List">
+        insert into platform_contract_tag
+        ( tag_id, contract_id) values
+        <foreach collection="list" item="item"  separator=",">
+        (#{item.tagId},#{item.contractId})
+        </foreach>
+    </insert>
+
+    <insert id="saveContractSnapshot" parameterType="com.cloud.platform.model.PlatformContractModel">
+        insert into platform_contract_snapshot
+        select * from platform_contract
+        where  id = #{id}
+    </insert>
+
+    <update id="updateContract" parameterType="com.cloud.platform.model.PlatformContractModel">
+        update platform_contract
+        set contract_name = #{contractName},
+         contract_status = #{contractStatus},
+          contract_src = #{contractSrc},
+         contract_due_date = #{contractDueDate},
+          process_user = #{processUser},
+          business_status = #{businessStatus},
+           company_name = #{companyName},
+           contract_start_date = #{contractStartDate}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteContractTagIds">
+        delete from platform_contract_tag where contract_id = #{id}
+    </delete>
+
+    <update id="deleteContract">
+        update platform_contract
+        set is_delete = 1
+        where id in (${ids})
+    </update>
+
+    <select id="getContractTags" resultType="com.cloud.platform.model.PlatformTagsModel">
+        select * from platform_tags
+    </select>
+
+    <insert id="saveContractSnapshotIds">
+        insert into platform_contract_snapshot
+        select * from platform_contract
+        where id in (${ids})
+    </insert>
+
+</mapper>

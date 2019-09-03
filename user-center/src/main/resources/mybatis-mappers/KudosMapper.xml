@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.KudosDao">
+	
+    <select id="queryKudosParams" resultType="com.cloud.model.cibil.KudosParamEntity" >
+		select k.* from kudos_param k where 1=1
+		<if test="name != null and name != ''">
+            AND k.`name` = #{name} 
+        </if>
+		<if test="code != null and code != ''">
+            AND k.`code`= #{code}
+        </if>
+        <if test="value != null and value != ''">
+            AND k.value= #{value}
+        </if>
+		 order by k.param_id desc
+	</select>
+	
+	<insert id="insertKudosCibil" parameterType="com.cloud.model.cibil.LoanCibilResponseEntity" useGeneratedKeys="true" keyProperty="cibilId">
+		INSERT INTO kudos_cibil_response (
+			orderId,
+			referenceNumber,
+			password,
+			user,
+			memberCode,
+			businessUnitId,
+			applicationId,
+			solutionSetId,
+			step,
+			start,
+			code,
+			description,
+			panNumber,
+			score,
+			scoreType,
+			createTime,
+			info
+		)
+		 VALUES
+         ( 
+           #{orderId},
+           #{referenceNumber},
+           #{password},
+           #{user},
+           #{memberCode},
+           #{businessUnitId},
+           #{applicationId},
+           #{solutionSetId},
+           #{step},
+           #{start},
+           #{code},
+           #{description},
+           #{panNumber},
+           #{score},
+           #{scoreType},
+           NOW(),
+           #{info}
+           )
+	</insert>
+	<!-- kudos获取cibil返回的score -->
+	<select id="queryCibilScore" resultType="com.cloud.model.cibil.LoanCibilResponseEntity">
+		SELECT
+			a.applicationId,
+			a.businessUnitId,
+			a.`code`,
+			a.createTime,
+			a.description,
+			a.memberCode,
+			a.orderId,
+			a.panNumber,
+			a.`password`,
+			a.referenceNumber,
+			a.score,
+			a.scoreType,
+			a.solutionSetId,
+			a.`start`,
+			a.step,
+			a.`user` 
+		FROM
+			kudos_cibil_response a 
+		WHERE
+			a.orderId = #{orderId} ORDER BY a.createTime ASC limit 1
+	</select>
+
+	<!-- 查看cibil中orderid是否存在  -->
+	<!-- <select id="queryCibilCount" resultType="com.cloud.model.cibil.LoanCibilResponseEntity">
+		select a.* from kudos_cibil_response a WHERE a.orderId = #{orderId}
+	</select> -->
+	<!-- 查看cibil中orderNo是否存在  -->
+	<select id="queryCibilInfoCount" resultType="com.cloud.user.model.CibilInfo">
+		select a.order_no from kudos_cibilinfo a WHERE a.order_no = #{orderNo}
+	</select>
+	<!-- 统计cibil中kudos_creditreport订单号出现的次数 -->
+	<select id="queryCreditreportCount" resultType="com.cloud.user.model.Creditreport">
+		select c.order_no from kudos_creditreport c where c.order_no = #{orderNo}
+	</select>
+	<!-- 查看kudos中orderid与kudosType是否存在 -->
+	<!-- <select id="queryKudosCount" resultType="">
+		select a.* from kudos_response a where a.orderId=#{orderId} AND a.kudos_type=#{kudosType}
+	</select> -->
+	<!-- cibil展示系统中用户基础信息 -->
+	<select id="getInquiryInfo" resultType="com.cloud.user.model.Inquiry">
+		SELECT
+			c.holds_full_name_pan firstname,
+			c.birthday_pan birthday,
+			c.sex,
+			c.email,
+			c.mobile cellphone,
+			c.fathers_name_pan fathersname,
+			c.permanent_no_pan permanentno 
+		FROM
+			user_info_history c 
+		WHERE 1=1 AND
+			 c.order_no = #{orderNo}
+	</select>
+	<!-- cibil展示系统中用户基础信息-地址 -->
+	<select id="getUserAddressInfo" resultType="com.cloud.user.model.UserAddress">
+		SELECT
+			a.company_phone companyphone,
+			a.address_detail addressdetail,
+			a.state,
+			a.district,
+			a.county,
+			a.town,
+			a.create_time createtime,
+			a.address_type addresstype,
+			a.`status` 
+		FROM
+			user_address a,
+			user_order b 
+		WHERE
+			a.user_id = b.user_id 
+			AND a.STATUS = '1' 
+			AND b.order_num = #{orderNo}
+	</select>
+</mapper>

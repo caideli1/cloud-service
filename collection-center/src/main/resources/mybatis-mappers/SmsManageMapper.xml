@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.SmsManageDao">
+	
+    <select id="querySmsManageInfo" resultType="com.cloud.collection.model.SmsManageModel" >
+		select s.* from collection_manage s where 1=1
+		<if test="userId != null and userId != ''">
+            AND s.user_id = #{userId} 
+        </if>
+		<if test="sendStartTime != null and sendStartTime != ''">
+            AND s.create_time &gt;= #{sendStartTime}
+        </if>
+        <if test="sendEndTime != null and sendEndTime != ''">
+            AND s.create_time &lt;= #{sendEndTime}
+        </if>
+		 order by s.create_time desc
+	</select>
+	
+	<select id="querySysUserInfo" resultType="com.cloud.model.user.SysUser">
+		select * from sys_user where id = #{userId}
+	</select>
+</mapper>

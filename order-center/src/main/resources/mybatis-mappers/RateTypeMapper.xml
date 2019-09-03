@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.RateTypeDao">
+
+    <insert id="batchInsertRateType" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO
+            product_rate_type
+            (name, rate, mode, type, create_user, create_time)
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (
+            #{item.name}, #{item.rate}, #{item.mode}, #{item.type}, #{item.createUser}, #{item.createTime}
+            )
+        </foreach>
+    </insert>
+
+    <update id="deleteRateType" parameterType="java.util.List">
+        UPDATE product_rate_type SET is_deleted = id
+        WHERE id IN
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="batchUpdateRateTypes" parameterType="java.util.List">
+        update product_rate_type
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix=" rate=case" suffix="end,">
+                <foreach collection="list" item="rateType">
+                    <if test="rateType.rate != null">
+                        when id=#{rateType.id} then #{rateType.rate}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix=" mode=case" suffix="end,">
+                <foreach collection="list" item="rateType" >
+                    <if test="rateType.mode != null">
+                        when id=#{rateType.id} then #{rateType.mode}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix=" type=case" suffix="end,">
+                <foreach collection="list" item="rateType">
+                    <if test="rateType.type != null">
+                        when id=#{rateType.id} then #{rateType.type}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix=" name=case" suffix="end,">
+                <foreach collection="list" item="rateType">
+                    <if test="rateType.name != null and rateType.name != ''">
+                        when id=#{rateType.id} then #{rateType.name}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        where id in
+        <foreach collection="list" item="rateType" separator="," open="(" close=")">
+            #{rateType.id}
+        </foreach>
+    </update>
+
+    <update id="updateRateTypeServiceRateId" parameterType="java.util.List">
+        <choose>
+            <when test="rateTypeIdList.size() > 0">
+                UPDATE product_rate_type SET service_rate_id = #{serviceRateId}
+                WHERE id IN
+                <foreach collection="rateTypeIdList" index="index" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </when>
+            <otherwise>
+                select 0
+            </otherwise>
+        </choose>
+    </update>
+
+    <select id="sumRateOfRateTypes" parameterType="java.util.List" resultType="java.math.BigDecimal">
+        <choose>
+            <when test="list.size() > 0">
+                SELECT SUM(rate) FROM product_rate_type WHERE id IN
+                <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </when>
+            <otherwise>
+                SELECT 0.00000
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryByServiceRateId" resultType="com.cloud.model.product.RateType">
+       SELECT id, rate, mode, name, type FROM product_rate_type WHERE service_rate_id = #{serviceRateId} AND is_deleted = 0
+    </select>
+
+</mapper>

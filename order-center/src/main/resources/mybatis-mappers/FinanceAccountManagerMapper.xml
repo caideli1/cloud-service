@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.FinanceAccountManagerDao">
+    <select id="getLoanAccountInfo" resultType="com.cloud.order.model.FinanceAccountManagerModel">
+        SELECT id, balance, amount
+        FROM finance_account_manager
+        WHERE loan_passageway = #{loanChannel}
+        AND is_delete = 0
+        AND station = 1
+    </select>
+
+    <select id="selectHighestPriorityAccount" resultType="com.cloud.order.model.FinanceAccountManagerModel">
+        SELECT id, loan_passageway
+        FROM finance_account_manager
+        WHERE is_delete = 0
+        AND station = 1
+        ORDER BY pay_order ASC
+        LIMIT 1
+    </select>
+
+
+</mapper>

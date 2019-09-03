@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.CollectionGroupUserDao">
+
+    <!--批量分组-->
+    <insert id="batchInsert" parameterType="List">
+        insert into
+        collection_group_user(group_id,user_id)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.groupId},#{item.userId})
+        </foreach>
+    </insert>
+
+</mapper>

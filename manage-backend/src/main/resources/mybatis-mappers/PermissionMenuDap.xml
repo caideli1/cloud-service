@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.backend.dao.PermissionMenuDao">
+    <select id="getMenusByUserId" resultType="com.cloud.backend.model.Menu">
+		SELECT
+			menu.*
+		FROM
+			sys_permission_menu_relation pm_re
+			JOIN sys_menu menu ON pm_re.menu_id = menu.id
+			JOIN sys_user_permission_relation up_re ON up_re.permission_id = pm_re.permission_id
+		WHERE
+			up_re.sys_user_id = #{userId}
+    </select>
+</mapper>

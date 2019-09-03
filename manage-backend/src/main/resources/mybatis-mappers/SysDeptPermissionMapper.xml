@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.backend.dao.SysDeptPermissionDao">
+
+    <select id="findDeptPermissionsByDeptId" resultType="com.cloud.model.user.SysPermission">
+		SELECT
+			permission_id id,
+			permission,
+			name
+		FROM
+			sys_dept_permission_relation r
+			LEFT JOIN sys_permission p ON p.id = r.permission_id
+		WHERE
+			r.dept_id = #{deptId}
+    </select>
+</mapper>

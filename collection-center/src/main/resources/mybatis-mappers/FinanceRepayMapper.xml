@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.FinanceRepayDao">
+
+    <!--逾期订单查询-->
+    <select id="queryLateOrderList" resultType="com.cloud.collection.model.FinanceDueOrderModel" parameterType="Map">
+
+        SELECT
+        finance_due_order.id,
+        CONCAT('MN',finance_due_order.order_no,'PD') orderNo,
+        finance_due_order.customer_no customerNo,
+        finance_due_order.`name`,
+        finance_due_order.mobile,
+        finance_due_order.loan_amount loanAmount,
+        finance_due_order.due_days dueDays,
+        finance_due_order.due_amount dueAmount,
+        finance_due_order.due_start dueStart,
+        case when finance_due_order.due_end = '0000-00-00' then null
+        else finance_due_order.due_end end dueEnd,
+        '逾期' loanStatus,
+        finance_due_order.finished_type finishedType,
+        finance_due_order.finished_type renewalState,
+        finance_due_order.is_extension isExtension
+        <if test="isCollection!=null and isCollection!='' and isCollection==100">
+            ,  finance_repay.loan_period loanPeriod
+        </if>
+        FROM
+
+        finance_due_order
+        join   user_info  on   finance_due_order.customer_no=user_info.id
+        <!--判定 展期-->
+        <if test="isCollection!=null and isCollection!='' and isCollection==100">
+        left   join   finance_repay  on   finance_repay.order_no=finance_due_order.order_no
+        </if>
+        where
+
+        1=1
+        <if test="isCollection==null or isCollection=='' ">
+            and finance_due_order.is_extension !='1'
+
+        </if>
+        <if test="isCollection!=null  and isCollection!=''   ">
+            and finance_due_order.id in
+            (
+            select max(id)
+            from finance_due_order
+            group by order_no
+            )
+
+        </if>
+
+
+        <!--应还款日期条件区间-->
+        <if test="startDueDate!=null and  startDueDate!=''">
+            and date_sub(finance_due_order.due_start,interval 1 day) &gt;= #{startDueDate}
+        </if>
+        <if test="endDueDate!=null and  endDueDate!=''">
+            and date_sub(finance_due_order.due_start,interval 1 day) &lt;= #{endDueDate}
+        </if>
+
+        <!--实际还款日期条件区间-->
+        <if test="startActualDate!=null and  startActualDate!=''">
+            and finance_due_order.due_end &gt;= #{startActualDate}
+        </if>
+        <if test="endActualDate!=null and  endActualDate!=''">
+            and finance_due_order.due_end &lt;= #{endActualDate}
+        </if>
+
+
+        <if test="orderNo!=null and orderNo!='' ">
+            and order_no=#{orderNo}
+        </if>
+        <!--用户编号绑定模糊查询-->
+        <if test="userId!=null and userId!=''">
+            <bind name="_userId" value="'%' + userId + '%'"/>
+            and finance_due_order.customer_no like #{_userId}
+        </if>
+        <!--用户电话号码绑定模糊查询-->
+        <if test="phone!=null and  phone!=''">
+            <bind name="_phone" value="'%' + phone + '%'"/>
+            and finance_due_order.mobile like #{_phone}
+        </if>
+        <if test="finishedType!=null and  finishedType!=''  and finishedType!=0">
+            and finance_due_order.finished_type=#{finishedType}
+        </if>
+
+        <if test="isSettle!=null  and isSettle!='' and  isSettle!=0  ">
+            <if test="isSettle==1">
+                and finance_due_order.due_end!=0
+            </if>
+            <if test="isSettle==2">
+                and finance_due_order.due_end=0
+            </if>
+        </if>
+
+        <!-- 排序 -->
+        order by
+        <if test="loanStatus!=null and  loanStatus!=''  and loanStatus!=0   ">
+            <if test="loanStatus==1">
+                finance_due_order.due_days ,
+            </if>
+            <if test="loanStatus==2">
+                finance_due_order.due_end desc,
+            </if>
+
+        </if>
+        <if test="overDaysSort!=null and overDaysSort!='' and overDaysSort!=0  ">
+            <if test="overDaysSort==1">
+                finance_due_order.due_days,
+            </if>
+            <if test="overDaysSort==2">
+                finance_due_order.due_days desc,
+
+            </if>
+        </if>
+
+        <if test="isSettle!=null and  isSettle!=''  and isSettle!=0   ">
+            <if test="isSettle==1">
+                finance_due_order.due_end desc,
+            </if>
+            <if test="isSettle==2">
+                finance_due_order.due_days,
+            </if>
+
+        </if>
+
+
+        <if test="overDaysSort==null or overDaysSort=='' or overDaysSort==0  ">
+            <if test="isSettle==null or  isSettle==''  or isSettle==0   ">
+
+                finance_due_order.due_days,
+
+            </if>
+        </if>
+        <if test="loanAmountSort!=null and  loanAmountSort!=''">
+            <if test="loanAmountSort==1">finance_due_order.loan_amount,</if>
+            <if test="loanAmountSort==2">finance_due_order.loan_amount desc,</if>
+        </if>
+        finance_due_order.mobile
+
+
+    </select>
+
+
+    <select id="queryRepaymentByOrderNo" resultType="com.cloud.collection.model.FinanceRepayModel">
+
+            select  *   from   finance_repay
+        where order_no=#{orderNo}
+
+    </select>
+
+    <select id="getOneFinanceRepayByParams" resultType="com.cloud.collection.model.FinanceRepayModel">
+
+        select  *   from   finance_repay
+        where 1=1
+        <if test="orderNoAndMNPD!=null and orderNoAndMNPD!=''">
+            and CONCAT('MN',order_no,'PD') = #{orderNoAndMNPD}
+        </if>
+        <if test="orderNo!=null and  orderNo!=''">
+            and order_no=#{orderNo}
+        </if>
+        <if test="orderStatus!=nul">
+            and order_status=#{orderStatus}
+        </if>
+        limit 1
+    </select>
+
+</mapper>

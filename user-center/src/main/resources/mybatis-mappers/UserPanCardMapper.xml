@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.UserPanCardDao">
+
+    <insert id="savePanCardInfo" parameterType="com.cloud.model.appUser.UserPanCardModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_pan_card
+           (
+            user_id,
+            card_front_url,
+            card_back_url,
+            card_front_pdf,
+            card_back_pdf,
+            holds_full_name,
+            fathers_name,
+            permanent_no,
+            create_time
+            <if test="isIdentified != null">
+                ,
+                is_identify
+            </if>
+            <if test="birthday!=null and birthday!=''  ">
+                ,
+                birthday
+            </if>
+            <if test="match != null">
+                ,
+                `match`
+            </if>
+            <if test="matchScore != null">
+                ,
+                match_score
+            </if>
+           )
+        VALUES
+         (
+            #{userId},
+            #{cardFrontUrl},
+            #{cardBackUrl},
+            #{cardFrontPdf},
+            #{cardBackPdf},
+            #{holdsFullName},
+            #{fathersName},
+            #{permanentNo},
+            now()
+            <if test="isIdentified != null">
+                ,#{isIdentified}
+            </if>
+            <if test="birthday != null">
+                ,#{birthday}
+            </if>
+            <if test="match != null">
+                ,#{match}
+            </if>
+            <if test="matchScore != null">
+                ,#{matchScore}
+            </if>
+        )
+    </insert>
+
+
+    <update id="updatePanCardInfo" parameterType="com.cloud.model.appUser.UserPanCardModel">
+        update user_pan_card
+        <set>
+            card_front_url = #{cardFrontUrl},
+            card_back_url = #{cardBackUrl},
+            card_front_pdf = #{cardFrontPdf},
+            card_back_pdf = #{cardBackPdf},
+            holds_full_name = #{holdsFullName},
+            fathers_name = #{fathersName},
+            permanent_no = #{permanentNo},
+            create_time = now(),
+            <if test="isIdentified == true">
+                is_identify=1,
+            </if>
+            <if test="isIdentified == false">
+                is_identify=0,
+            </if>
+            <if test="birthday!=null and   birthday!=''">
+                birthday=#{birthday},
+            </if>
+            <if test="match != null">
+                `match` = #{match},
+            </if>
+            <if test="matchScore != null">
+                match_score = #{matchScore},
+            </if>
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <select id="getPanCardInfo" resultType="com.cloud.model.appUser.UserPanCardModel">
+       SELECT  *
+       FROM user_pan_card
+       WHERE user_id = #{userId}
+       ORDER BY id DESC
+       LIMIT 1
+    </select>
+
+</mapper>

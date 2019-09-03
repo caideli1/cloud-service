@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.backend.dao.RepayChannelManagerDao">
+
+   <!-- <resultMap id="BaseResultMap" type="com.cloud.backend.model.RepayChannelManager">
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+        `id`,`name`,`status`,`offline_status`,`account`,`account_name`,`account_address`,`ifsc_code`,`upi`,`create_time`,`update_time`
+    </sql>
+
+    <sql id="WHERE_COMMON_CONDITION">
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <if test="status != null">
+                AND `status` = #{status}
+            </if>
+            <if test="offlineStatus != null">
+                AND `offline_status` =#{offlineStatus}
+            </if>
+        </trim>
+    </sql>
+
+    <select id="getAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from `repay_channel_manager`
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap" parameterType="Integer">
+        select
+        <include refid="Base_Column_List"/>
+        from `repay_channel_manager`
+        where id = #{id}
+    </select>
+
+    <select id="getList" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select
+        <include refid="Base_Column_List"/>
+        from `repay_channel_manager`
+        <include refid="WHERE_COMMON_CONDITION"/>
+        order by `create_time` desc
+    </select>
+
+    <insert id="insert"  parameterType="com.cloud.backend.model.RepayChannelManager"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into `repay_channel_manager`(`name`,`status`,`offline_status`,`account`,`account_name`,`account_address`,`ifsc_code`,`upi`)
+        VALUES
+        (
+            #{name}, #{status}, #{offlineStatus}, #{account}, #{accountName}, #{accountAddress}, #{ifscCode}, #{upi}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.cloud.backend.model.RepayChannelManager">
+        UPDATE `repay_channel_manager`
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null">`name` = #{name},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="offlineStatus != null">`offline_status` = #{offlineStatus},</if>
+            <if test="account != null">`account` = #{account},</if>
+            <if test="accountName != null">`account_name` = #{accountName},</if>
+            <if test="accountAddress != null">`account_address` = #{accountAddress},</if>
+            <if test="ifscCode != null">`ifsc_code` = #{ifscCode},</if>
+            <if test="upi != null">`upi` = #{upi},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+        </trim>
+        WHERE id = #{id}
+    </update>-->
+
+
+</mapper>

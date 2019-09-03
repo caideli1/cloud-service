@@ -1,0 +1,467 @@
+<!--  Created by TIBCO WSDL  -->
+<wsdl:definitions xmlns:ns0="http://www.kotak.com/schemas/CMS_Generic/Payment_Request.xsd" xmlns:ns1="http://www.kotak.com/schemas/CMS_Generic/Payment_Response.xsd" xmlns:ns2="http://www.kotak.com/schemas/CMS_Generic/Reversal_Request.xsd" xmlns:ns3="http://www.kotak.com/schemas/CMS_Generic/Reversal_Response.xsd" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:tns="http://xmlns.kotak.com/CMS_Generic_Service" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" name="Untitled" targetNamespace="http://xmlns.kotak.com/CMS_Generic_Service">
+<wsdl:types>
+<xsd:schema xmlns:tns="http://www.kotak.com/schemas/CMS_Generic/Payment_Request.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.kotak.com/schemas/CMS_Generic/Payment_Request.xsd">
+<xsd:simpleType name="Amount_ST">
+<xsd:restriction base="xsd:decimal">
+<xsd:pattern value="\d{0,16}(\.\d{1,4})?"/>
+<xsd:minExclusive value="0.0"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="Date_ST">
+<xsd:restriction base="xsd:date"/>
+</xsd:simpleType>
+<xsd:complexType name="EnrichmentSetType">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" name="Enrichment" type="tns:MaxChar4000_ST"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="InitiateRequest">
+<xsd:sequence>
+<xsd:element name="RequestHeader" type="tns:RequestHeaderType"/>
+<xsd:element name="InstrumentList" type="tns:InstrumentListType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="InstrumentListType">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" name="instrument" type="tns:InstrumentType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="InstrumentType">
+<xsd:sequence>
+<xsd:element name="InstRefNo" type="tns:MinChar1_MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="CompanyId" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="CompBatchId" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="ConfidentialInd" type="tns:MaxChar1_ST"/>
+<xsd:element name="MyProdCode" type="tns:MinChar1_MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="CompTransNo" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="PayMode" type="tns:MaxChar10_ST"/>
+<xsd:element name="TxnAmnt" type="tns:Amount_ST"/>
+<xsd:element minOccurs="0" name="AccountNo" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="DrRefNmbr" type="tns:MaxChar14_ST"/>
+<xsd:element minOccurs="0" name="DrDesc" type="tns:MaxChar40_ST"/>
+<xsd:element minOccurs="0" name="PaymentDt" type="tns:Date_ST"/>
+<xsd:element minOccurs="0" name="BankCdInd" type="tns:MaxChar1_ST"/>
+<xsd:element minOccurs="0" name="BeneBnkCd" type="tns:MaxChar10_ST"/>
+<xsd:element minOccurs="0" name="RecBrCd" type="tns:MaxChar11_ST"/>
+<xsd:element minOccurs="0" name="BeneAcctNo" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="BeneName" type="tns:MaxChar40_ST"/>
+<xsd:element minOccurs="0" name="BeneCode" type="tns:MaxChar10_ST"/>
+<xsd:element minOccurs="0" name="BeneEmail" type="tns:MaxChar255_ST"/>
+<xsd:element minOccurs="0" name="BeneFax" type="tns:MaxChar40_ST"/>
+<xsd:element minOccurs="0" name="BeneMb" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="BeneAddr1" type="tns:MaxChar70_ST"/>
+<xsd:element minOccurs="0" name="BeneAddr2" type="tns:MaxChar70_ST"/>
+<xsd:element minOccurs="0" name="BeneAddr3" type="tns:MaxChar70_ST"/>
+<xsd:element minOccurs="0" name="BeneAddr4" type="tns:MaxChar70_ST"/>
+<xsd:element minOccurs="0" name="BeneAddr5" type="tns:MaxChar70_ST"/>
+<xsd:element minOccurs="0" name="city" type="tns:MaxChar60_ST"/>
+<xsd:element minOccurs="0" name="zip" type="tns:ZipCode_ST"/>
+<xsd:element minOccurs="0" name="Country" type="tns:MaxChar60_ST"/>
+<xsd:element minOccurs="0" name="State" type="tns:MaxChar60_ST"/>
+<xsd:element minOccurs="0" name="TelephoneNo" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="BeneId" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="BeneTaxId" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="AuthPerson" type="tns:MaxChar40_ST"/>
+<xsd:element minOccurs="0" name="AuthPersonId" type="tns:MaxChar15_ST"/>
+<xsd:element minOccurs="0" name="DeliveryMode" type="tns:MaxChar2_ST"/>
+<xsd:element minOccurs="0" name="PayoutLoc" type="tns:MaxChar10_ST"/>
+<xsd:element minOccurs="0" name="PickupBr" type="tns:MaxChar10_ST"/>
+<xsd:element minOccurs="0" name="PaymentRef" type="tns:MaxChar45_ST"/>
+<xsd:element minOccurs="0" name="ChgBorneBy" type="tns:MaxChar1_ST"/>
+<xsd:element minOccurs="0" name="InstDt" type="tns:Date_ST"/>
+<xsd:element minOccurs="0" name="MICRNo" type="tns:MaxChar6_ST"/>
+<xsd:element minOccurs="0" name="CreditRefNo" type="tns:MaxChar45_ST"/>
+<xsd:element minOccurs="0" name="PaymentDtl" type="tns:MaxChar140_ST"/>
+<xsd:element minOccurs="0" name="PaymentDtl1" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="PaymentDtl2" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="PaymentDtl3" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="MailToAddr1" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="MailToAddr2" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="MailToAddr3" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="MailToAddr4" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="MailTo" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ExchDoc" type="tns:MaxChar30_ST"/>
+<xsd:element minOccurs="0" name="InstChecksum" type="tns:MaxChar400_ST"/>
+<xsd:element minOccurs="0" name="InstRF1" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF2" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF3" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF4" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF5" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF6" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF7" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF8" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF9" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF10" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF11" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF12" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF13" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF14" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="InstRF15" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="EnrichmentSet" type="tns:EnrichmentSetType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:simpleType name="MaxChar10_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="10"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar11_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="11"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar140_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="140"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar14_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="14"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar15_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="15"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar1_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="1"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar200_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="200"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar20_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="20"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar255_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="255"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar2_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="2"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar30_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="30"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar4000_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="4000"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar400_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="400"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar40_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="40"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar45_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="45"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar60_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="60"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar6_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="6"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar70_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="70"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MinChar1_MaxChar10_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="1"/>
+<xsd:maxLength value="10"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MinChar1_MaxChar20_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="1"/>
+<xsd:maxLength value="20"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:complexType name="RequestHeaderType">
+<xsd:sequence>
+<xsd:element name="MessageId" type="tns:MinChar1_MaxChar20_ST"/>
+<xsd:element name="MsgSource" type="tns:MinChar1_MaxChar20_ST"/>
+<xsd:element name="ClientCode" type="tns:MinChar1_MaxChar10_ST"/>
+<xsd:element minOccurs="0" name="BatchRefNmbr" type="tns:MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="HeaderChecksum" type="tns:MaxChar400_ST"/>
+<xsd:element minOccurs="0" name="ReqRF1" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ReqRF2" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ReqRF3" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ReqRF4" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ReqRF5" type="tns:MaxChar200_ST"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:simpleType name="ZipCode_ST">
+<xsd:restriction base="xsd:string">
+<xsd:pattern value="[0-9]{0,10}"/>
+<xsd:minLength value="0"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:element name="InitiateRequestRoot" type="tns:InitiateRequest"/>
+<xsd:element name="Payment" type="tns:InitiateRequest"/>
+</xsd:schema>
+<xsd:schema xmlns:tns="http://www.kotak.com/schemas/CMS_Generic/Payment_Response.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.kotak.com/schemas/CMS_Generic/Payment_Response.xsd">
+<xsd:complexType name="Acknowledgement">
+<xsd:sequence>
+<xsd:element name="MessageId" type="tns:MinChar1_MaxChar20_ST"/>
+<xsd:element name="StatusCd" type="tns:MinChar1_MaxChar10_ST"/>
+<xsd:element name="StatusRem" type="tns:MinChar1_MaxChar2000_ST"/>
+<xsd:element minOccurs="0" name="ResRF1" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ResRF2" type="tns:MaxChar200_ST"/>
+<xsd:element minOccurs="0" name="ResRF3" type="tns:MaxChar200_ST"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="AcknowledgementType">
+<xsd:sequence>
+<xsd:element name="AckHeader" type="tns:Acknowledgement"/>
+<xsd:element minOccurs="0" name="InstrumentList" type="tns:InstrumentListType"/>
+<xsd:element minOccurs="0" name="FaultList" type="tns:FaultListType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="ErrorListType">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" name="Error" type="tns:MinChar1_MaxChar2000_ST"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="FaultListType">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" name="Fault" type="tns:FaultType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="FaultType">
+<xsd:sequence>
+<xsd:element minOccurs="0" name="Code" type="tns:MaxChar10_ST"/>
+<xsd:element name="Reason" type="tns:MinChar1_MaxChar2000_ST"/>
+<xsd:element minOccurs="0" name="InvalidField" type="tns:MaxChar50_ST"/>
+<xsd:element minOccurs="0" name="SubmittedFieldValue" type="tns:MaxChar4000_ST"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="InstrumentListType">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" name="Instrument" type="tns:InstrumentType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="InstrumentType">
+<xsd:sequence>
+<xsd:element name="InstRefNo" type="tns:MinChar1_MaxChar20_ST"/>
+<xsd:element minOccurs="0" name="InstStatusCd" type="tns:MinChar1_MaxChar10_ST"/>
+<xsd:element minOccurs="0" name="InstStatusRem" type="tns:MinChar1_MaxChar2000_ST"/>
+<xsd:element minOccurs="0" name="ErrorList" type="tns:ErrorListType"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:simpleType name="MaxChar10_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="10"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar200_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="200"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar4000_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="4000"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MaxChar50_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="0"/>
+<xsd:maxLength value="50"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MinChar1_MaxChar10_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="1"/>
+<xsd:maxLength value="10"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MinChar1_MaxChar2000_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="1"/>
+<xsd:maxLength value="2000"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:simpleType name="MinChar1_MaxChar20_ST">
+<xsd:restriction base="xsd:string">
+<xsd:minLength value="1"/>
+<xsd:maxLength value="20"/>
+</xsd:restriction>
+</xsd:simpleType>
+<xsd:element name="AcknowledgementRoot" type="tns:AcknowledgementType"/>
+<xsd:element name="Payment" type="tns:AcknowledgementType"/>
+</xsd:schema>
+<xsd:schema xmlns="http://www.kotak.com/schemas/CMS_Generic/Reversal_Request.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.kotak.com/schemas/CMS_Generic/Reversal_Request.xsd">
+<xsd:element name="Client_Code" type="xsd:string"/>
+<xsd:element name="Date_Post" type="xsd:string"/>
+<xsd:element name="Details">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" minOccurs="0" ref="ns2:Msg_Id"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="Header">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element ref="ns2:Req_Id"/>
+<xsd:element ref="ns2:Msg_Src"/>
+<xsd:element ref="ns2:Client_Code"/>
+<xsd:element ref="ns2:Date_Post"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="Msg_Id" type="xsd:string"/>
+<xsd:element name="Msg_Src" type="xsd:string"/>
+<xsd:element name="Req_Id" type="xsd:string"/>
+<xsd:element name="Reversal">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element ref="ns2:Header"/>
+<xsd:element ref="ns2:Details"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+</xsd:schema>
+<xsd:schema xmlns="http://www.kotak.com/schemas/CMS_Generic/Reversal_Response.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.kotak.com/schemas/CMS_Generic/Reversal_Response.xsd">
+<xsd:element name="Client_Code" type="xsd:string"/>
+<xsd:element name="Date_Post" type="xsd:string"/>
+<xsd:element name="Details">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" minOccurs="0" ref="ns3:Rev_Detail"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="Header">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element ref="ns3:Req_Id"/>
+<xsd:element ref="ns3:Msg_Src"/>
+<xsd:element ref="ns3:Client_Code"/>
+<xsd:element ref="ns3:Date_Post"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="Msg_Id" type="xsd:string"/>
+<xsd:element name="Msg_Src" type="xsd:string"/>
+<xsd:element name="Req_Id" type="xsd:string"/>
+<xsd:element name="Rev_Detail">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element ref="ns3:Msg_Id"/>
+<xsd:element ref="ns3:Status_Code"/>
+<xsd:element ref="ns3:Status_Desc"/>
+<xsd:element minOccurs="0" ref="ns3:UTR"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="Reversal">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element ref="ns3:Header"/>
+<xsd:element ref="ns3:Details"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="Status_Code" type="xsd:string"/>
+<xsd:element name="Status_Desc" type="xsd:string"/>
+<xsd:element name="UTR" nillable="true" type="xsd:string"/>
+</xsd:schema>
+</wsdl:types>
+<wsdl:service name="CMS_Generic_Service">
+<wsdl:port binding="tns:CMS_Generic_WebAPIBinding" name="CMS_Generic_WebAPI">
+<soap:address location="https://apigw.kotak.com:8443/cms_generic_service?apikey=l7xx9e2c880d0b4549049ff62c5bf595c310"/>
+</wsdl:port>
+</wsdl:service>
+<wsdl:portType name="WebAPI">
+<wsdl:operation name="Payment">
+<wsdl:input message="tns:Pay_Request"/>
+<wsdl:output message="tns:Pay_Response"/>
+</wsdl:operation>
+<wsdl:operation name="Reversal">
+<wsdl:input message="tns:Rev_Request"/>
+<wsdl:output message="tns:Rev_Response"/>
+</wsdl:operation>
+</wsdl:portType>
+<wsdl:binding name="CMS_Generic_WebAPIBinding" type="tns:WebAPI">
+<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+<wsdl:operation name="Payment">
+<soap:operation soapAction="/BusinessServices/StarterProcesses/CMS_Generic_Service.serviceagent/Payment" soapActionRequired="true" style="document"/>
+<wsdl:input>
+<soap:body parts="Request" use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body parts="Response" use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="Reversal">
+<soap:operation soapAction="/BusinessServices/StarterProcesses/CMS_Generic_Service.serviceagent/Reversal" soapActionRequired="true" style="document"/>
+<wsdl:input>
+<soap:body parts="Request" use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body parts="Response" use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+</wsdl:binding>
+<wsdl:message name="Pay_Request">
+<wsdl:part element="ns0:Payment" name="Request"/>
+</wsdl:message>
+<wsdl:message name="Pay_Response">
+<wsdl:part element="ns1:Payment" name="Response"/>
+</wsdl:message>
+<wsdl:message name="Rev_Request">
+<wsdl:part element="ns2:Reversal" name="Request"/>
+</wsdl:message>
+<wsdl:message name="Rev_Response">
+<wsdl:part element="ns3:Reversal" name="Response"/>
+</wsdl:message>
+</wsdl:definitions>

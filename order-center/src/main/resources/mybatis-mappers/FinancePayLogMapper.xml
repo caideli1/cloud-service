@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.order.dao.FinancePayLogDao">
+    <sql id="WHERE_COMMON_CONDITION">
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <if test="userPhone != null and userPhone !=''">
+                AND instr(`userPhone`,#{userPhone}) > 0
+            </if>
+            <if test="finalFailureTimeStart != null and finalFailureTimeStart != ''">
+                and DATE_FORMAT(finalFailureTime,'%Y-%m-%d') &gt;= #{finalFailureTimeStart}
+            </if>
+            <if test="finalFailureTimeEnd != null and finalFailureTimeEnd != ''">
+                and DATE_FORMAT(finalFailureTime,'%Y-%m-%d') &lt;= #{finalFailureTimeEnd}
+            </if>
+            <if test="shouldRepayTimeEnd != null and shouldRepayTimeEnd != ''">
+                and shouldRepayTime &lt;= #{shouldRepayTimeEnd}
+            </if>
+            <if test="shouldRepayTimeStart != null and shouldRepayTimeStart != ''">
+                and shouldRepayTime &gt;= #{shouldRepayTimeStart}
+            </if>
+        </trim>
+    </sql>
+
+    <sql id="ORDER_BY_CONDITION">
+        <trim prefix="order by" prefixOverrides=",">
+            <if test="finalFailureTimeOrder == 1">
+                ,finalFailureTime ASC
+            </if>
+            <if test="finalFailureTimeOrder == 0">
+                ,finalFailureTime Desc
+            </if>
+            <if test="shouldRepayTimeOrder == 1">
+                ,shouldRepayTime ASC
+            </if>
+            <if test="shouldRepayTimeOrder == 0">
+                ,shouldRepayTime Desc
+            </if>
+            <if test="dueDaysOrder == 1">
+                ,dueDays ASC
+            </if>
+            <if test="dueDaysOrder == 0">
+                ,dueDays Desc
+            </if>
+            <if test="countNumOrder == 1">
+                ,countNum ASC
+            </if>
+            <if test="countNumOrder == 0">
+                ,countNum Desc
+            </if>
+        </trim>
+    </sql>
+    <!-- 本来和下面的我的失败列表不一样，是left join 但是后续需求变动，同时极度的不合理导致变动，和下面的sql一样了，所以保留两个独立的方法，不合并了
+    created by caideli 2019/08/28 -->
+    <select id="getOrderFailureList" parameterType="Map" resultType="com.cloud.model.order.OrderFailureVo">
+        SELECT
+            f.userLoanId          AS userLoanId,
+            f.userName            AS userName,
+            f.userPhone           AS userPhone,
+            f.shouldRepayTime     AS shouldRepayTime,
+            f.orderNo             AS orderNo,
+            f.finalFailureTime    AS finalFailureTime,
+            f.countNum            AS countNum,
+            f.isFollow            AS isFollow,
+            c.id                  AS collectionId,
+            (
+                IFNULL(c.loan_amount, 0) + IFNULL(c.due_amount, 0)
+                )                 AS shouldRepayAmount,
+            IFNULL(c.due_days, 0) AS dueDays
+        FROM
+            (
+                SELECT
+                    u.id           AS userLoanId,
+                    u.user_name    AS userName,
+                    u.user_phone   AS userPhone,
+                    IFNULL(
+                            u.extension_due_date,
+                            u.loan_end_date
+                        )          AS shouldRepayTime,
+                    f1.order_no    AS orderNo,
+                    f1.create_time AS finalFailureTime,
+                    f2.countNum    AS countNum,
+                    u.is_follow    AS isFollow
+                FROM
+                    `finance_pay_log` f1,
+                    (
+                        SELECT
+                            order_no,
+                            MAX(`id`) AS id,
+                            count(id) AS countNum
+                        FROM
+                            `finance_pay_log`
+                        WHERE
+                            `loan_type` IN (3, 4, 5)
+                          AND `pay_status` = 0
+                          AND `order_status` = 0
+                        GROUP BY
+                            `order_no`
+                    ) f2,
+                    user_loan u
+                WHERE
+                    f1.id = f2.id
+                  AND u.loan_number = f1.order_no
+            ) f
+                INNER JOIN (
+                SELECT
+                    c1.*
+                FROM
+                    collection_record c1,
+                    (
+                        SELECT
+                            max(id) AS id,
+                            loan_num
+                        FROM
+                            collection_record
+                        GROUP BY
+                            loan_num
+                    ) c2
+                WHERE
+                    c1.id = c2.id
+                  AND c1.pay_status = 0
+            ) c ON c.loan_num = f.orderNo
+        <include refid="WHERE_COMMON_CONDITION"/>
+        <include refid="ORDER_BY_CONDITION"/>
+    </select>
+
+    <select id="getMyOrderFailureList" parameterType="Map" resultType="com.cloud.model.order.OrderFailureVo">
+        SELECT
+            f.userLoanId          AS userLoanId,
+            f.userName            AS userName,
+            f.userPhone           AS userPhone,
+            f.shouldRepayTime     AS shouldRepayTime,
+            f.orderNo             AS orderNo,
+            f.finalFailureTime    AS finalFailureTime,
+            f.countNum            AS countNum,
+            f.isFollow            AS isFollow,
+            c.id                  AS collectionId,
+            (
+                IFNULL(c.loan_amount, 0) + IFNULL(c.due_amount, 0)
+                )                 AS shouldRepayAmount,
+            IFNULL(c.due_days, 0) AS dueDays
+        FROM
+            (
+                SELECT
+                    u.id           AS userLoanId,
+                    u.user_name    AS userName,
+                    u.user_phone   AS userPhone,
+                    IFNULL(
+                            u.extension_due_date,
+                            u.loan_end_date
+                        )          AS shouldRepayTime,
+                    f1.order_no    AS orderNo,
+                    f1.create_time AS finalFailureTime,
+                    f2.countNum    AS countNum,
+                    u.is_follow    AS isFollow
+                FROM
+                    `finance_pay_log` f1,
+                    (
+                        SELECT
+                            order_no,
+                            MAX(`id`) AS id,
+                            count(id) AS countNum
+                        FROM
+                            `finance_pay_log`
+                        WHERE
+                            `loan_type` IN (3, 4, 5)
+                          AND `pay_status` = 0
+                          AND `order_status` = 0
+                        GROUP BY
+                            `order_no`
+                    ) f2,
+                    user_loan u
+                WHERE
+                    f1.id = f2.id
+                  AND u.loan_number = f1.order_no
+            ) f
+                INNER JOIN (
+                SELECT
+                    c1.*
+                FROM
+                    collection_record c1,
+                    (
+                        SELECT
+                            max(id) AS id,
+                            loan_num
+                        FROM
+                            collection_record
+                        GROUP BY
+                            loan_num
+                    ) c2,
+                    collection_assgin_record c3
+                WHERE
+                    c1.id = c2.id
+                  AND c1.pay_status = 0
+                  and c1.id = c3.collection_id
+                  and c3.collection_user_id = #{userId}
+            ) c ON c.loan_num = f.orderNo
+        <include refid="WHERE_COMMON_CONDITION"/>
+        <include refid="ORDER_BY_CONDITION"/>
+    </select>
+
+    <select id="getMyOrderFailureCount" parameterType="Map" resultType="Integer">
+        SELECT
+            IFNULL(count(f.orderNo), 0) AS failureCount
+        FROM
+            (
+                SELECT
+                    u.id           AS userLoanId,
+                    u.user_name    AS userName,
+                    u.user_phone   AS userPhone,
+                    IFNULL(
+                            u.extension_due_date,
+                            u.loan_end_date
+                        )          AS shouldRepayTime,
+                    f1.order_no    AS orderNo,
+                    f1.create_time AS finalFailureTime,
+                    f2.countNum    AS countNum
+                FROM
+                    `finance_pay_log` f1,
+                    (
+                        SELECT
+                            order_no,
+                            MAX(`id`) AS id,
+                            count(id) AS countNum
+                        FROM
+                            `finance_pay_log`
+                        WHERE
+                            `loan_type` IN (3, 4, 5)
+                          AND `pay_status` = 0
+                          AND `order_status` = 0
+                        GROUP BY
+                            `order_no`
+                    ) f2,
+                    user_loan u
+                WHERE
+                    f1.id = f2.id
+                  AND u.loan_number = f1.order_no
+            ) f
+                INNER JOIN (
+                SELECT
+                    c1.*
+                FROM
+                    collection_record c1,
+                    (
+                        SELECT
+                            max(id) AS id,
+                            loan_num
+                        FROM
+                            collection_record
+                        GROUP BY
+                            loan_num
+                    ) c2,
+                    collection_assgin_record c3
+                WHERE
+                    c1.id = c2.id
+                  AND c1.pay_status = 0
+                  and c1.id = c3.collection_id
+                  and c3.collection_user_id = #{userId}
+            ) c ON c.loan_num = f.orderNo
+    </select>
+
+    <select id="getMyOrderCount" parameterType="Map" resultType="Integer">
+        SELECT
+            count(c.count)
+        FROM
+            (
+                SELECT
+                    count(DISTINCT c1.loan_num) AS count,
+                    c1.loan_num
+                FROM
+                    collection_record c1,
+                    collection_assgin_record c2
+                WHERE
+                    c1.id = c2.collection_id
+                    AND c2.collection_user_id = #{userId}
+                GROUP BY
+                    c1.loan_num
+            ) c
+    </select>
+
+</mapper>

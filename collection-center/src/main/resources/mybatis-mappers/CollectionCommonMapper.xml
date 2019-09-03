@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CollectionCommonMapper">
+    <!--催收 通用查询 抽出-->
+    <!--通用查詢首部-->
+    <sql id="select">
+    SELECT
+    collection.id   id,
+	collection.handle_status handleStatus,
+	collection.collection_station collectionStation,
+	collection.due_amount dueAmount,
+	collection.due_days dueDays,
+	collection.loan_num orderNo,
+	collection.appoint_case_start_date appointCaseStartDate,
+	collection.appoint_case_end_date appointCaseEndDate,
+	collection.appoint_case_type appointCaseType,
+	collection.follow_up_status followUpStatus,
+	collection.apply_status applyStatus,
+	collection.is_mark  isMark,
+	case when  collection.due_end = 0 then '2000-01-01'
+	else collection.due_end end
+	 dueEnd,
+	collection.due_start dueStart,
+	collection.mobile mobile,
+	collection.name ,
+	collection.pay_status payStatus,
+	assgin.collection_name collectionName,
+    collection.loan_amount    loanAmount,
+ 	(collection.loan_amount+collection.due_amount)   repayAmount,
+	collection.accrued_count accruedCount,
+	collection.follow_up_time followUpTime,
+	collection.repay_date repayDate,
+	collection.close_collection_count closeCollectionCount,
+		case when   payLog.userId  is null  then 0 else 1 end  renewalState
+    </sql>
+    <!--通用表关联-->
+    <sql id="from">
+        FROM
+        collection_record collection
+        left join (select distinct customer_no userId
+        from finance_pay_log where pay_status=1 and loan_type in (3,4,5,6,9,10)) payLog on
+        payLog.userId=collection.customer_no
+        <!--我的订单查询 内连接-->
+
+        left join collection_assgin_record assgin on assgin.id=collection.assgin_id and
+        assgin.appoint_case_type=collection.appoint_case_type
+        <if test="historyOperatorIds !=null and historyOperatorIds!='' ">
+            left join collection_assgin_record operatorHistory on collection.id=operatorHistory.collection_id and
+            operatorHistory.id in
+            (select max(id) from collection_assgin_record group by collection_user_id )
+        </if>
+    </sql>
+    <!--通用查询条件-->
+    <sql id="where">
+
+        <!--已经结束的订单不做保留-->
+        where
+        1=1
+        <!--新增查询条件-->
+
+        <!--是否高亮-->
+        <if test="isMark!=null and isMark!='' ">
+            and collection.is_mark=#{isMark}
+        </if>
+        <!--用户姓名-->
+        <if test="name!=null and name!='' ">
+            and collection.name=#{name}
+        </if>
+        <!--指派人-->
+        <if test="operatorIds!=null and operatorIds!=''">
+            and assgin.collection_user_id in (${operatorIds})
+        </if>
+        <!--历史指派人ID-->
+        <if test="historyOperatorIds!=null and historyOperatorIds!=''">
+            and operatorHistory.collection_user_id in (${historyOperatorIds})
+        </if>
+        <!--开始跟近时间-->
+        <if test="startFollowUpTime!=null and startFollowUpTime!='' ">
+            and collection.follow_up_time>=#{startFollowUpTime}
+        </if>
+        <!--结束跟近时间-->
+        <if test="endFollowUpTime!=null and endFollowUpTime!='' ">
+            and collection.follow_up_time<![CDATA[ <= ]]>#{endFollowUpTime}
+        </if>
+        <!--逾期天数开始-->
+        <if test="startDueDay!=null and startDueDay!='' ">
+            and collection.due_days>=#{startDueDay}
+        </if>
+        <!--实际退案日期开始-->
+        <if test="startDateWithdrawal!=null and startDateWithdrawal!='' ">
+            and collection.date_withdrawal>=#{startDateWithdrawal}
+        </if>
+        <if test="endDateWithdrawal!=null and endDateWithdrawal!='' ">
+            and collection.date_withdrawal<![CDATA[<=]]>#{endDateWithdrawal}
+        </if>
+
+        <!--逾期天数结束-->
+        <if test="endDueDay!=null and endDueDay!='' ">
+            and collection.due_days<![CDATA[<=]]>#{endDueDay}
+        </if>
+        <!--应还金额 取区间-->
+        <!--开始应还金额-->
+        <if test="startRepayAmount!=null and startRepayAmount!=''">
+            and (collection.loan_amount+collection.due_amount)>= #{startRepayAmount}
+        </if>
+        <!--结束应还金额-->
+        <if test="endRepayAmount!=null and endRepayAmount!=''">
+            and (collection.loan_amount+collection.due_amount)<![CDATA[<=]]>#{endRepayAmount}
+        </if>
+        <!--委案开始日期 时间值开始-->
+        <if test="startAppointCaseStartDate!=null and  startAppointCaseStartDate!=''">
+            and collection.appoint_case_start_date>= #{startAppointCaseStartDate}
+        </if>
+
+        <if test="assginType==2">
+            and assgin.id is null
+        </if>
+        <if test="assginType==1">
+            and assgin.id is not null
+        </if>
+
+        <if test="appointCaseStatus==1">
+            and collection.id in ( select distinct collection_id from collection_interest_reduction )
+        </if>
+        <if test="appointCaseStatus==2">
+            and collection.pay_status!=0
+        </if>
+        <if test="appointCaseStatus==3">
+            and collection. collection_station=4
+        </if>
+
+
+        <!--委案开始日期 时间值结束-->
+        <if test="endAppointCaseStartDate!=null and  endAppointCaseStartDate!=''">
+            and collection.appoint_case_start_date<![CDATA[<=]]> #{endAppointCaseStartDate}
+        </if>
+        <!--委案结束日期 时间值开始-->
+        <if test="startAppointCaseEndDate!=null and  startAppointCaseEndDate!=''">
+            and collection.appoint_case_end_date>= #{startAppointCaseEndDate}
+        </if>
+        <!--委案结束日期 时间值开始-->
+        <if test="endAppointCaseEndDate!=null and  endAppointCaseEndDate!=''">
+            and collection.appoint_case_end_date<![CDATA[<=]]> #{endAppointCaseEndDate}
+        </if>
+        <!--应还日开始-->
+        <if test="startRepayDate!=null and  startRepayDate!=''">
+            and collection.repay_date >= #{startRepayDate}
+        </if>
+        <!--应还日结束-->
+        <if test="endRepayDate!=null and  endRepayDate!=''">
+            and collection.repay_date<![CDATA[<=]]> #{endRepayDate}
+        </if>
+        <if test="startDueDays!=null and startDueDays!='' ">
+            and collection.due_days>=#{startDueDays}
+        </if>
+        <if test="endDueDays!=null and endDueDays!='' ">
+            and collection.due_days<![CDATA[<=]]>#{startDueDays}
+        </if>
+        <if test="startDueDays!=null and startDueDays!='' ">
+            and collection.due_days>=#{startDueDays}
+        </if>
+        <if test="endDueDays!=null and endDueDays!='' ">
+            and collection.due_days<![CDATA[<=]]>#{startDueDays}
+        </if>
+        <!--新增查询条件结束-->
+        <!--查询电话是否为空-->
+        <if test="customerNo!=null  and  customerNo!=''">
+            <bind name="_customerNo" value="'%' + customerNo + '%'"/>
+            and collection.customer_no like #{_customerNo}
+        </if>
+        <!--查询电话是否为空-->
+        <if test="mobile!=null  and  mobile!=''">
+            <bind name="_mobile" value="'%' + mobile + '%'"/>
+            and ( collection.mobile like #{_mobile}
+            <if test="orderNoPhoneList!=null">
+                or (
+                collection.loan_num in
+                <foreach collection="orderNoPhoneList" item="orderNo" separator=","
+                         open="(" close=")">
+                    #{orderNo}
+                </foreach>
+                )
+            </if>
+            <if test="collectionIdPhoneList!=null">
+                or (
+                collection.id in
+                <foreach collection="collectionIdPhoneList" item="collectionId" separator=","
+                         open="(" close=")">
+                    #{collectionId}
+                </foreach>
+                )
+            </if>
+            )
+        </if>
+        <if test="phone!=null  and  phone!=''">
+            <bind name="_phone" value="'%' + phone + '%'"/>
+            and ( collection.mobile like #{_phone}
+            <if test="orderNoPhoneList!=null">
+                or (
+                collection.loan_num in
+                <foreach collection="orderNoPhoneList" item="orderNo" separator=","
+                         open="(" close=")">
+                    #{orderNo}
+                </foreach>
+                )
+            </if>
+            <if test="collectionIdPhoneList!=null">
+                or (
+                collection.id in
+                <foreach collection="collectionIdPhoneList" item="collectionId" separator=","
+                         open="(" close=")">
+                    #{collectionId}
+                </foreach>
+                )
+            </if>
+            )
+        </if>
+        <!--判定借据号是否为空-->
+        <if test="loanNum!=null and loanNum !=''">
+            <bind name="_loanNum" value="'%' + loanNum + '%'"/>
+            and CONCAT('MN',collection.loan_num,'PD') like #{_loanNum}
+        </if>
+        <!--判定逾期开始日期 逾期结束日期是否为空-->
+        <if test="dueStartDate!=null and dueStartDate !=''">
+            and collection.due_start>=#{dueStartDate}
+
+        </if>
+        <!-- 是否需要过滤从催收发送过短信 -->
+        <if test="isSendMessage!=null and isSendMessage!=''">
+            <if test="isSendMessage==1">
+                and collection.loan_num in (select order_no from collection_manage where status_code = 200 )
+            </if>
+            <if test="isSendMessage==2">
+                and collection.loan_num not in (select order_no from collection_manage where status_code = 200 )
+            </if>
+
+        </if>
+
+        <if test="dueEndDate!=null and dueEndDate !='' ">
+            and collection.due_start<![CDATA[<=]]>#{dueEndDate}
+        </if>
+        <!--判定指派人ID 是否为空-->
+        <if test="collectionUserId !=null and collectionUserId !=''">
+            and assgin.collection_user_id=#{collectionUserId}
+        </if>
+        <!--催收状态-->
+        <if test="collectionStation!=null and  collectionStation!=''   ">
+            and collection.collection_station=#{collectionStation}
+        </if>
+        <!--催收次数 判定-->
+        <if test="accruedCount!=null and accruedCount!=''">
+            <if test="accruedCount!=5">
+                and collection.accrued_count=#{accruedCount}
+            </if>
+            <if test="accruedCount==5">
+                and collection.accrued_count>=5
+            </if>
+        </if>
+        <!--资产处置 1未处置 2 已处置-->
+        <if test="handleStatus!=null and  handleStatus!=0">
+
+            and collection.handle_status=#{handleStatus}
+        </if>
+        <!--判定贷款开始时间 -->
+        <if test="startDate!=null and  startDate!=''">
+            and log.create_time >=#{startDate}
+        </if>
+
+        <if test="endDate!=null and endDate!=''">
+
+            and log.create_time<![CDATA[<=]]> #{endDate}
+        </if>
+        <!--更近状态-->
+        <if test="followUpStatus!=null and  followUpStatus!=''">
+            and collection.follow_up_status=#{followUpStatus}
+        </if>
+        <!--委案类型-->
+        <if test="appointCaseType!=null and  appointCaseType!=''">
+            and collection.appoint_case_type=#{appointCaseType}
+        </if>
+        <if test="collectionIdPhoneList!=null">
+            and (
+            collection.id in
+            <foreach collection="collectionIdPhoneList" item="collectionId" separator=","
+                     open="(" close=")">
+                #{collectionId}
+            </foreach>
+            )
+        </if>
+        <if test="context!=null and context!=''">
+            <if test="collectionIdContextList!=null and  collectionIdContextList!=''">
+                and (
+                collection.id in
+                <foreach collection="collectionIdContextList" item="collectionId" separator=","
+                         open="(" close=")">
+                    #{collectionId}
+                </foreach>
+                )
+            </if>
+            <if test="collectionIdContextList==null or collectionIdContextList==''">
+                and 1=2
+            </if>
+        </if>
+        <if test="addressUserIdList!=null  ">
+            and (
+            collection.customer_no in
+            <foreach collection="collectionIdPhoneList" item="collectionId" separator=","
+                     open="(" close=")">
+                #{collectionId}
+            </foreach>
+            )
+        </if>
+    </sql>
+    <!--通用排序-->
+
+    <sql id="orderBy">
+        <if test="loanAmountSort!=null and  loanAmountSort!='' ">
+            <if test="loanAmountSort==1">
+                order By collection.loan_amount
+            </if>
+            <if test="loanAmountSort==2">
+                order By collection.loan_amount desc
+            </if>
+        </if>
+        <if test="dueDaysSort!=null and  dueDaysSort!='' ">
+            <if test="dueDaysSort==1">
+                order By collection.due_days
+            </if>
+            <if test="dueDaysSort==2">
+                order By collection.due_days desc
+            </if>
+        </if>
+        <if test="dueAmountSort!=null and  dueAmountSort!='' ">
+            <if test="dueAmountSort==1">
+                order By collection.due_amount
+            </if>
+            <if test="dueAmountSort==2">
+                order By collection.due_amount desc
+            </if>
+        </if>
+
+        <if test="accruedCountSort!=null and  accruedCountSort!='' ">
+            <if test="accruedCountSort==1">
+                order By collection.due_amount
+            </if>
+            <if test="accruedCountSort==2">
+                order By collection.due_amount desc
+            </if>
+        </if>
+
+
+    </sql>
+
+</mapper>

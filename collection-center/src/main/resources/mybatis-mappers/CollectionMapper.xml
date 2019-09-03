@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.CollectionDao">
+
+    <!--催收记录列表查询-->
+    <select id="queryCollectionList" resultType="com.cloud.model.collection.CollectionRecordVo" parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>
+        <include refid="CollectionCommonMapper.from"/>
+        <include refid="CollectionCommonMapper.where"/>
+        <include refid="CollectionCommonMapper.orderBy"/>
+    </select>
+    <!--查找我的催收记录-->
+    <select id="queryMyCollectionList" resultType="com.cloud.model.collection.CollectionRecordVo"
+            parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>
+        <include refid="CollectionCommonMapper.from"/>
+        <include refid="CollectionCommonMapper.where"/>
+        <include refid="CollectionCommonMapper.orderBy"/>
+    </select>
+    <!--催收记录列表查询-->
+    <select id="queryCollectionReportList" resultType="com.cloud.model.collection.CollectionRecordVo" parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>,
+        rep.actual_amount payAmount
+        <include refid="CollectionCommonMapper.from"/>
+        join finance_repay rep  on   collection.loan_num=rep.order_no
+        <include refid="CollectionCommonMapper.where"/>
+    </select>
+
+    <!-- 显示我的催收的所有的总金额 催收订单的未还总额=所有本金+所有逾期；涉及减免通过的金额，不减。 -->
+    <select id="sumMyCollectionAllAmount" resultType="java.math.BigDecimal" parameterType="Map">
+        SELECT
+        (sum(collection.due_amount)+sum(collection.loan_amount))
+        as allMyCollectionAmount
+        <include refid="CollectionCommonMapper.from"/>
+        <include refid="CollectionCommonMapper.where"/>
+    </select>
+
+    <!--资产处置列表-->
+    <select id="queryEndPropertyList" resultType="com.cloud.model.collection.CollectionRecordVo" parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>
+        ,date_sub( collection.due_start,interval 1 day) loanEnd,
+        log.create_time loanStart,
+        case when userInfo.aadhaar_account is null then ''
+        else userInfo.aadhaar_account end userAadhaarNo
+        <include refid="CollectionCommonMapper.from"/>
+        left join ( select * from finance_pay_log where loan_type in('1','2','7') and pay_status=1 ) log on
+        collection.loan_num= log.order_no
+        join   user_info  userInfo  on  userInfo.id=collection.customer_no
+        <include refid="CollectionCommonMapper.where"/>
+        and collection.due_end = 0 and collection.due_days>= 31
+        <include refid="CollectionCommonMapper.orderBy"/>
+    </select>
+
+    <!--主管审批减免订单-->
+    <select id="queryInterestReductionList" resultType="com.cloud.model.collection.CollectionRecordVo"
+            parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>,
+        collection.apply_status applyStatus,
+        reduction.reduction_ammount reductionAmmount,
+        reduction.apply_date reductionApplyTime,
+        collection.due_amount+collection.loan_amount-reduction.reduction_ammount reductionSumAmmount,
+        collection.due_amount+collection.loan_amount repayAmount,
+        assgin.collection_name collectionName,
+        assgin.assgin_date assginDate
+        <include refid="CollectionCommonMapper.from"/>
+        join collection_interest_reduction reduction on collection.id=reduction.collection_id
+        and reduction.id
+        in(
+        select MAX(id) from collection_interest_reduction GROUP BY collection_id
+        )
+        <include refid="CollectionCommonMapper.where"/>
+        <!--判定小于31天 或还有待审批的订单-->
+        and reduction.apply_status !=4
+        <if test="applyStatus!=null and  applyStatus!=''">
+            and reduction.apply_status=#{applyStatus}
+        </if>
+
+        <include refid="CollectionCommonMapper.orderBy"/>
+    </select>
+
+    <!--主管审批减免订单-->
+    <select id="queryAssginList" resultType="com.cloud.model.collection.CollectionRecordVo"
+            parameterType="Map">
+        <include refid="CollectionCommonMapper.select"/>,
+        collection.apply_status applyStatus,
+        assgin.collection_name collectionName,
+        assgin.assgin_date assginDate
+        <include refid="CollectionCommonMapper.from"/>
+        <include refid="CollectionCommonMapper.where"/>
+        <!--判定小于31天 或还有待审批的订单-->
+        and collection.due_end=0 and collection.due_days <![CDATA[ < ]]> 31
+        <include refid="CollectionCommonMapper.orderBy"/>
+    </select>
+
+    <!--插入催收分配-->
+    <insert id="insertAssginCollection" parameterType="List"  useGeneratedKeys="true" keyProperty="id" >
+        insert into
+        collection_assgin_record(collection_id,collection_name,assgin_date,manager_id,collection_user_id,appoint_case_type)
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.collectionId},#{item.collectionName},now(),#{item.managerId},#{item.collectionUserId},#{item.appointCaseType})
+        </foreach>
+    </insert>
+    <!--插入减免记录-->  <!-- 添加order_no字段，并且配合数据迁移脚本，补全数据 by caideli 2019/8/6 -->
+    <insert id="insertInterestReduction" parameterType="Map">
+
+        insert into
+        collection_interest_reduction(apply_status,reduction_ammount,collection_id,remarks,reduction_sum_ammount,apply_date,order_no)
+        values(1,#{reductionAmmount},#{collectionId},#{remarks},#{reductionSumAmmount},now(),#{orderNo})
+    </insert>
+
+    <!--查询催收反馈-->
+    <select id="queryAccruedListByCollectionId"
+            resultType="com.cloud.collection.model.CollectionAccruedRecordModel">
+SELECT
+collection_accrued_record.id,
+collection_accrued_record.collection_id  collectionId,
+collection_accrued_record.remarks,
+collection_accrued_record.accrued_date accruedDate,
+collection_accrued_record.accrued_name accruedName,
+collection_accrued_record.tag_ids  tagIds
+
+FROM
+collection_accrued_record
+WHERE
+collection_accrued_record.collection_id = #{collectionId}
+    </select>
+    <!--通过备注查找 催收ID-->
+    <select resultType="Long" id="findCollectionIdByComment">
+        select distinct collection_id from collection_accrued_record
+        where 1=1
+        <if test="comment!=null  and  comment!=''">
+            <bind name="_comment" value="'%' + comment + '%'"/>
+            and remarks like #{_comment}
+        </if>
+
+    </select>
+
+    <!--插入反馈信息-->
+    <insert id="insertAccrued" parameterType="com.cloud.collection.model.CollectionAccruedRecordModel">
+
+insert into collection_accrued_record
+ ( collection_id,accrued_name,remarks,accrued_date,tag_ids)
+ values (#{collectionId},#{accruedName},#{remarks},now(),#{tagIds})
+
+    </insert>
+
+    <!--跟新催收次数加一-->
+    <update id="updateCollectionRecordForAccruedCount">
+        update collection_record set accrued_count=accrued_count+1
+        where id=#{id}
+    </update>
+
+    <!--罚息审核-->
+    <update id="updateInterestReduction" parameterType="Map">
+      update   collection_interest_reduction set  apply_status=#{applyStatus},
+      expire_time = #{expireTime},
+      audit_time = #{auditTime}
+      where id in ( select   t.id  from (select max(id) id from  collection_interest_reduction   where collection_id  in (${ids}) group  by collection_id) t )
+    </update>
+
+    <select id="queryAllCollectionRecordByIds" resultType="com.cloud.collection.model.CollectionRecord">
+SELECT
+	id,
+	due_id dueId,
+	collection_station collectionStation,
+	loan_num loanNum,
+	handle_status handleStatus,
+	accrued_count accruedCount,
+	apply_status applyStatus,
+	appoint_case_type appointCaseType,
+	follow_up_status followUpStatus,
+	appoint_case_end_date appointCaseEndDate,
+	appoint_case_start_date appointCaseStartDate,
+	is_mark,
+	`name`,
+	mobile,
+	loan_amount loanAmount,
+	customer_no customerNo ,
+	due_amount dueAmount,
+	due_start dueStart,
+case when	due_end=0 then null
+else due_end  end dueEnd
+,
+	follow_up_time followUpTime,
+	is_extension isExtension,
+	due_days dueDays,
+	repay_date repayDate,
+	assgin_id assginId,
+	date_withdrawal dateWithdrawal,
+	pay_status payStatus
+FROM
+	collection_record
+      where  id  in (${ids})
+    </select>
+
+    <!--罚息审核-->
+    <update id="updateApplyStationForCollectionRecord" parameterType="Map">
+      update   collection_record set  apply_status=#{applyStatus}
+      where  id in(
+      ${collectionId}
+      )
+    </update>
+
+    <!--减免记录查询-->
+    <select id="queryInterestReduction" resultType="com.cloud.collection.model.CollectionInterestReductionModel">
+SELECT
+collection_interest_reduction.id,
+collection_interest_reduction.apply_status  applyStatus,
+collection_interest_reduction.reduction_ammount reductionAmmount,
+collection_interest_reduction.collection_id collectionId,
+collection_interest_reduction.remarks,
+collection_interest_reduction.reduction_sum_ammount deductionSumAmount,
+collection_interest_reduction.apply_date applyDate
+FROM
+collection_interest_reduction
+ where collection_interest_reduction.collection_id   in  (  ${collectionId} )
+        <if test="applyStatus!=null">
+            and apply_status = #{applyStatus}
+        </if>
+    </select>
+    <!--通过客户ID获取名称-->
+    <select id="findIdByName" resultType="long">
+		SELECT id from sys_user WHERE username = #{username}
+	</select>
+    <!--通过客户名称获取ID-->
+    <select id="findNameById" resultType="String">
+		SELECT username FROM sys_user where id = #{id}
+	</select>
+
+    <!--通过减免申请寻找催收Id-->
+    <select id="findCollectionIdByInterestReductionId" resultType="Long">
+        select  DISTINCT  collection_id
+        from    collection_interest_reduction
+         where  id in
+         ( ${ids} )
+    </select>
+
+    <!--查询放款信息-->
+    <select id="queryLoanBaseInfo" resultType="Map">
+SELECT
+distinct
+    `order`.id AS orderId,
+	`order`.order_num loanNum  ,
+	 CONCAT(`order`.order_num ,'DPN' ) loanNumStr ,
+	 `order`.order_num contractNo ,
+	due.`name`,
+  userInfo.aadhaar_account     userAadhaarNo,
+	payLog.create_time startLoanDate,
+	repay.repay_date repayDate,
+	repay.loan_amount loanAmount,
+ CONCAT( `order`.apply_num ,'DPN-A' )  loanNumStr,
+ CONCAT( `order`.apply_num ,'DPN-B' ) contractNo
+FROM
+	collection_record collection
+	JOIN finance_due_order due ON collection.due_id = due.id
+	JOIN finance_repay repay ON due.order_no = repay.order_no
+	LEFT JOIN user_info userInfo ON userInfo.id = due.customer_no
+	LEFT JOIN finance_pay_log payLog ON payLog.pay_status = 1 	AND payLog.loan_type IN ( 1, 2, 7 )
+AND payLog.order_no = repay.order_no
+	left  join user_order `order` on  due.order_no= order.order_num
+where    collection.id = #{collectionId}
+    </select>
+
+    <!--查询催收金额-->
+    <select id="queryCollectionAmount" resultType="Map">
+        SELECT
+        distinct
+	due.due_days dueDays,
+	due.due_amount dueAmount,
+	due.loan_amount + due.due_amount rapyAmount,
+	 case when  reduction.collection_id  is null then 0 else    reduction.apply_status  end applyStatus
+	 ,
+	 case   when    reduction.apply_status = 2
+	 then
+	ifnull(reduction.reduction_sum_ammount,0)
+	 else 0 end
+	 reductionSumAmmount,
+	 reduction.expire_time expireTime,
+	 reduction.reduction_ammount reductionAmount,
+     reduction.remarks reductionReason
+    FROM
+	collection_record collection
+	JOIN finance_due_order due ON collection.due_id = due.id
+	JOIN finance_repay repay ON repay.order_no = due.order_no
+
+	left join  collection_assgin_record assgin on collection.id=assgin.collection_id and  collection.appoint_case_type=assgin.appoint_case_type
+	and  assgin.id in  (select  max(id) from collection_assgin_record group by collection_id )
+	LEFT JOIN ( SELECT
+	id,
+	reduction_ammount,
+	collection_id,
+	reduction_sum_ammount,
+	apply_status,
+	expire_time,
+	remarks
+FROM
+	collection_interest_reduction
+where  apply_status !=4
+	)reduction ON collection.id = reduction.collection_id  and  reduction.id  in (select  max(id)  from collection_interest_reduction  group  by collection_id )
+
+	where collection.id=#{collectionId}
+    </select>
+
+    <!--查询用户信息-->
+    <select id="queryUserInfo" resultType="Map">
+ SELECT
+distinct
+    userinfo.user_id userId,
+	userinfo.company_name companyName,
+	userinfo.mobile cell_phone,
+	userinfo.first_contact_id  firstContactId,
+	userinfo.second_contact_id  secondContactId,
+	addressCompny.company_phone companyMobile,
+	userinfo.whatsapp_account whatsappAccount,
+	userinfo.email,
+	CONCAT( address.state, 'state ', address.county, 'county  ', address.town, 'town  ', address.address_detail ) homeAddress,
+	CONCAT( addressCompny.state, 'state ', addressCompny.county, 'county  ', addressCompny.town, 'town  ', addressCompny.address_detail ) addressCompny
+FROM
+	user_info_history userinfo
+	LEFT JOIN user_address address ON address.id = userinfo.home_address_id
+	LEFT JOIN user_address addressCompny ON addressCompny.id = userinfo.company_address_id
+
+ where  order_no=#{orderNo}
+
+
+    </select>
+
+    <select id="queryUserContactRepairedByUserIdAndContactType" resultType="String">
+		SELECT
+			concat( contact_name, '   ', contact_mobile )
+		FROM
+			user_contact_repaired
+		WHERE
+			user_id = #{userId}
+			AND contact_type = #{contactType}
+			AND id IN (
+				SELECT
+					max( id )
+				FROM
+					user_contact_repaired
+				WHERE
+				user_id = #{userId}
+				AND contact_type = #{contactType}
+			)
+    </select>
+
+    <select id="queryContactNameByContactId" resultType="String">
+
+        select  concat(name,'   ' ,phone)
+        from    user_contact
+        where  id=#{contactId}
+
+    </select>
+
+
+    <update id="updateUserLoanStatusByLoanNums">
+        update  user_loan
+        set  loan_status=#{loanStatus}
+         where loan_number in (${loanNumbers})
+
+
+    </update>
+    <!--资产处置-->
+    <update id="updateHandleStatus">
+update collection_record  set handle_status = 2  where
+id in (${ids})
+    </update>
+
+    <!--查找除了拒绝的罚息申请数量-->
+    <select id="queryNotRefuseInterestReductionCount" resultType="int">
+       select  count(1)
+       from  collection_interest_reduction
+       where   apply_status!=3 and apply_status!=4
+         and  collection_id=#{collectionId}
+    </select>
+
+    <select id="queryCollectionMan" resultType="Map">
+SELECT
+distinct
+	s.id,
+	s.username
+FROM
+	sys_user s
+	  JOIN sys_user_permission_relation r ON s.id = r.sys_user_id
+	  JOIN sys_permission p ON p.id = r.permission_id
+WHERE
+	p.permission IN ( 'order:ergency:manager', 'order:ergency:my', 'permission:all' )
+
+
+    </select>
+
+    <update id="updateCollectionStation">
+    update collection_record
+        <trim prefix="SET" suffixOverrides=",">
+        <if test="collectionStation != null">collection_station = ${collectionStation},</if>
+    </trim>
+    where id in (${ids})
+  </update>
+
+    <!--获取图片信息 creat by ZhuJingTao-->
+    <select id="getImgInfo" resultType="Map">
+
+SELECT
+	history.face_img faceImg,
+	history.aadhaar_url_front aadhaarFront,
+	history.aadhaar_url_back aadhaarBack,
+	history.voter_back_url voterBackUrl,
+	history.voter_front_url  voterFrontUrl,
+	panCard.card_back_url panCardBack,
+	panCard.card_front_url panCardfront,
+	IFNULL(`order`.signature_url  ,'') signatureUrl
+FROM
+ user_info_history history
+
+	LEFT JOIN user_pan_card panCard on  pancard.id=history.pan_card_id
+	left join    user_order  `order` on history.order_no =  `order`.order_num
+    where    history.order_no =#{orderNo}
+
+    </select>
+    <!--获取认证信息-->
+    <select id="getConformFile" resultType="Map">
+
+ select  userInfo.bank_statement_url  bankStatementUrl,userInfo.work_card workCard
+  from   user_info_history  userInfo
+where  userInfo.order_no=#{orderNo}
+    </select>
+
+    <select id="getOrderNoById" resultType="String">
+     select due.order_no  from  finance_due_order  due
+	 join collection_record   collection   on  due.id= collection.due_id
+	 where collection.id =#{id}
+    </select>
+
+    <select id="getCollectionByDueId" resultType="com.cloud.collection.model.CollectionRecord">
+
+    select  *  from   collection_record
+	 where due_id =#{id}
+
+    </select>
+
+    <select id="queryAllTags" parameterType="Map" resultType="com.cloud.collection.model.CollectionTag">
+
+        select * from collection_tags where is_deleted!= 2
+
+        <if test="tagId!=null and  tagId!=''">
+            and id = #{tagId}
+        </if>
+
+    </select>
+
+
+    <select id="getOneCollectionInterestReductionByParams"
+            resultType="com.cloud.collection.model.CollectionInterestReductionModel">
+        select * from collection_interest_reduction
+        where expire_time = (
+        select expire_time from collection_interest_reduction
+        where 1=1
+        <if test="applyStatus!=null">
+            and apply_status=#{applyStatus}
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            and order_no=#{orderNo}
+        </if>
+        <if test="orderNoAndMNPD!=null and orderNoAndMNPD!=''">
+            and CONCAT('MN',order_no,'PD') = #{orderNoAndMNPD}
+        </if>
+        order by expire_time desc limit 1
+        )
+        <if test="applyStatus!=null">
+            and apply_status=#{applyStatus}
+        </if>
+        <if test="orderNo!=null and orderNo!=''">
+            and order_no=#{orderNo}
+        </if>
+        <if test="orderNoAndMNPD!=null and orderNoAndMNPD!=''">
+            and CONCAT('MN',order_no,'PD') = #{orderNoAndMNPD}
+        </if>
+        <if test="enable!=null">
+            and now() &lt;= expire_time
+        </if>
+        limit 1
+    </select>
+
+
+</mapper>

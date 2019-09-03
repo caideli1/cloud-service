@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.user.dao.UserContactRepairDao">
+
+    <select id="getContact" resultType="com.cloud.user.model.UserContactRepairEntity">
+		SELECT
+			name contact_name,
+			phone contact_mobile,
+			1 contact_type,
+			create_time repair_date
+		FROM
+			user_contact
+		WHERE
+		    user_id = #{userId}
+        <if test="contactType == 1">
+            AND relation IN ('Parent', 'Brother', 'Sister', 'Child')
+        </if>
+        <if test="contactType == 2">
+            AND relation IN ('Colleague', 'Friend', 'Classmate')
+        </if>
+
+    </select>
+</mapper>

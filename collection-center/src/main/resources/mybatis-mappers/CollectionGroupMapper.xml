@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.collection.dao.CollectionGroupDao">
+
+    <select id="getCollectionGroupList"
+            resultType="com.cloud.model.collection.CollectionGroupVo">
+        SELECT
+        g1.id,
+        g1.`name`,
+        IFNULL(g3.userCount,0) as userCount
+        FROM
+        collection_group g1
+        LEFT JOIN (
+        SELECT
+        g2.group_id,count(g2.user_id) as userCount
+        FROM
+        collection_group_user g2
+        GROUP BY
+        g2.group_id
+        ) g3 ON g1.id = g3.group_id
+        where 1= 1
+        <if test="id!=null">
+            and g1.id=#{id}
+        </if>
+    </select>
+</mapper>
