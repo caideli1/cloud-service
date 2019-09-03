@@ -2,9 +2,9 @@
 moneed:
   # redis 工具类相关配置 - 最好还是替换成 spring-data-redis
   redis:
-    address: redis://116.62.153.117:16380
-    ip: 116.62.153.117
-    port: 16380
+    address: redis://127.0.0.1:6379
+    ip: 127.0.0.1
+    port: 6379
     password:
     timeout: 1000
     min-idle: 5
