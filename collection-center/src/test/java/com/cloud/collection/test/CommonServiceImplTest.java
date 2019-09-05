@@ -49,7 +49,7 @@ public class CommonServiceImplTest {
         //对象入参和数组入参
 //        param("name","第二组").
 //                param("userIdList","1","72","20").
-        String a = mvc.perform(MockMvcRequestBuilders.post("/collection-group/getGroupAndUsersDetail").param("groupId","4").
+        String a = mvc.perform(MockMvcRequestBuilders.post("/from").
                 accept(MediaType.APPLICATION_JSON)).andReturn().getResponse().getContentAsString();
         System.out.println(a);
     }

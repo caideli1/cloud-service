@@ -8,11 +8,20 @@ spring:
     time-zone: GMT+5:30
   cloud:
     config:
-      discovery:
-        enabled: true
-        serviceId: config-center
       profile: ${spring.profiles.active}
       fail-fast: true
+      uri: http://localhost:8000/
+      label: master
+    bus:
+      refresh:
+        enabled: true
+#  cloud:
+#    config:
+#      discovery:
+#        enabled: true
+#        serviceId: config-center
+#      profile: ${spring.profiles.active}
+#      fail-fast: true
 server:
   port: 9901
 eureka:
@@ -26,7 +35,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: bus-refresh
   endpoint:
     health:
       show-details: always
