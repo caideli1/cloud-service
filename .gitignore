@@ -4,5 +4,7 @@
 /.project
 /logs/
 /*.iml
+*.iml
+*/*.iml
 /user-center.iml
 /.idea/
