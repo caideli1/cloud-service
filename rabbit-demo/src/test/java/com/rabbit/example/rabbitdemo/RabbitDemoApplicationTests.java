@@ -1,6 +1,6 @@
 package com.rabbit.example.rabbitdemo;
 
-import com.rabbit.example.rabbitdemo.config.Sender;
+import com.rabbit.example.rabbitdemo.rabbit.Sender;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

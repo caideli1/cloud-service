@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: rabbit-demo
+  profiles:
+    active: dev
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: GMT+5:30
+  cloud:
+    config:
+      profile: ${spring.profiles.active}
+      fail-fast: true
+      uri: http://localhost:8000/
+      label: master
+    bus:
+      refresh:
+        enabled: true
+#  cloud:
+#    config:
+#      discovery:
+#        enabled: true
+#        serviceId: config-center
+#      profile: ${spring.profiles.active}
+#      fail-fast: true
+server:
+  port: 6601
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.int}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: bus-refresh
+  endpoint:
+    health:
+      show-details: always
+  health:
+    redis:
+      enabled: false
+pagehelper:
+  helper-dialect: mysql
