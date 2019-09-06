@@ -2,6 +2,8 @@ package com.rabbit.example.rabbitdemo.controller;
 
 import com.cloud.common.dto.JsonResult;
 import com.rabbit.example.rabbitdemo.rabbit.Sender;
+import com.rabbit.example.rabbitdemo.rabbitStream.MySender;
+import com.rabbit.example.rabbitdemo.rabbitStream.UserDemo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +19,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestController {
 
-    @Autowired
+    @Autowired(required = false)
     private Sender sender;
+    @Autowired(required = false)
+    private MySender mySender;
 
     @GetMapping("/sendMessage")
-    public JsonResult queryCollectionList(String message) {
+    public JsonResult sendMessage(String message) {
         sender.send(message);
+        return JsonResult.ok();
+    }
+
+    @GetMapping("/sendMyMessage")
+    public JsonResult sendMyMessage(String message) {
+        UserDemo userDemo = new UserDemo();
+        userDemo.setAge(12);
+        userDemo.setUserName(message);
+        mySender.send(userDemo);
+        System.out.println("发送成功！");
         return JsonResult.ok();
     }
 }
