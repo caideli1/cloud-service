@@ -7,6 +7,7 @@ import com.cloud.model.order.FinanceDueOrderVo;
 import com.cloud.service.fallback.CollectionFallBackFactory;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Date;
@@ -88,4 +89,7 @@ public interface CollectionClient {
      */
     @GetMapping("/collection/getOneEnableCollectionInterestReduction")
     public CollectionInterestReductionModelVo getOneEnableCollectionInterestReduction(@RequestParam String orderNo);
+
+    @GetMapping("/collection/getSleuthLog")
+    public String getSleuthLog(@RequestParam String message);
 }

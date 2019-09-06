@@ -7,11 +7,13 @@ spring:
     active: dev
   cloud:
     config:
-      discovery:
-        enabled: true
-        serviceId: config-center
       profile: ${spring.profiles.active}
       fail-fast: true
+      uri: http://localhost:8000/
+      label: master
+    bus:
+      refresh:
+        enabled: true
   servlet:
     multipart:
       file-size-threshold: 1Mb

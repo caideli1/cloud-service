@@ -1,12 +1,15 @@
 package com.rabbit.example.rabbitdemo.controller;
 
 import com.cloud.common.dto.JsonResult;
+import com.cloud.service.feign.collection.CollectionClient;
 import com.rabbit.example.rabbitdemo.rabbit.Sender;
 import com.rabbit.example.rabbitdemo.rabbitStream.MySender;
 import com.rabbit.example.rabbitdemo.rabbitStream.UserDemo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -21,8 +24,10 @@ public class TestController {
 
     @Autowired(required = false)
     private Sender sender;
-    @Autowired(required = false)
+    @Autowired
     private MySender mySender;
+    @Autowired
+    private CollectionClient collectionClient;
 
     @GetMapping("/sendMessage")
     public JsonResult sendMessage(String message) {
@@ -38,5 +43,10 @@ public class TestController {
         mySender.send(userDemo);
         System.out.println("发送成功！");
         return JsonResult.ok();
+    }
+
+    @GetMapping("/getSleuthLog")
+    public JsonResult getSleuthLog(@RequestParam String message) {
+        return JsonResult.ok(collectionClient.getSleuthLog(message));
     }
 }

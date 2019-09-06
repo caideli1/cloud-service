@@ -66,6 +66,11 @@ public class CollectionFallBackFactory implements FallbackFactory<CollectionClie
             public CollectionInterestReductionModelVo getOneEnableCollectionInterestReduction(String orderNo) {
                 return null;
             }
+
+            @Override
+            public String getSleuthLog(String message) {
+                return null;
+            }
         };
     }
 }

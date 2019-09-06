@@ -78,6 +78,11 @@
             <artifactId>moneed-oss-starter</artifactId>
             <version>${project.version}-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>moneed-redis-starter</artifactId>
+            <version>${redis-starter.version}-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
