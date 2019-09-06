@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 //@RabbitListener(queues = "hello")
 public class Receiver {
     //@RabbitHandler
-    @RabbitListener(queues = "hello")
+    //@RabbitListener(queues = "hello")
     public void process(String hello) {
         System.out.println("Receiver : "+ hello);
     }

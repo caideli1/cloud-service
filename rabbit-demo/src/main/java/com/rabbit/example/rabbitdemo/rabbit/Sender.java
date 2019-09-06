@@ -13,7 +13,7 @@ import java.util.Date;
  * @Date : 2019/9/5 15:17
  * 描述：
  */
-@Component
+//@Component
 public class Sender {
 
     @Autowired
