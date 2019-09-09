@@ -19,6 +19,8 @@
         <module>order-center</module>
         <module>internal-interface</module>
         <module>collection-center</module>
+        <module>rabbit-demo</module>
+        <module>zipkin-demo</module>
     </modules>
 
     <parent>
@@ -64,12 +66,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            　　<groupId>org.springframework.boot</groupId>
-            　　<artifactId>spring-boot-devtools</artifactId>
-            　　<optional>true</optional>
-            　　<scope>true</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
