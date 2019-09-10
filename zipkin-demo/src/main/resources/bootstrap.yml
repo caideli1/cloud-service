@@ -15,6 +15,9 @@ spring:
     bus:
       refresh:
         enabled: true
+  zipkin:
+    sender:
+      type:
 server:
   port: 9411
 eureka:
@@ -39,3 +42,15 @@ management:
     web:
       server:
         auto-time-requests: false
+
+
+
+#  zipkin.storage.StorageComponent=elasticsearch
+#  zipkin.storage.type=elasticsearch
+#  #可以做集群，我用的本地测试没有部署elastic集群
+#  zipkin.storage.elasticsearch.hosts=127.0.0.1:9200
+#  zipkin.storage.elasticsearch.cluster=elasticsearch
+#  zipkin.storage.elasticsearch.index=zipkin
+#  zipkin.storage.elasticsearch.index-shards=5
+#  zipkin.storage.elasticsearch.index-replicas=1
+#  maxHttpHeaderSize=8192

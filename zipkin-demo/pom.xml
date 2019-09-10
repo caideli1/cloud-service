@@ -47,6 +47,11 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <!--zipkin的依赖开始-->
+        <!--<dependency>
+            <groupId>io.zipkin.java</groupId>
+            <artifactId>zipkin</artifactId>
+            <version>2.2.3</version>
+        </dependency>-->
         <dependency>
             <groupId>io.zipkin.java</groupId>
             <artifactId>zipkin-server</artifactId>
@@ -69,9 +74,31 @@
             <artifactId>jooq</artifactId>
             <version>3.8.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.zipkin.java</groupId>
+            <artifactId>zipkin-autoconfigure-collector-rabbitmq</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.java</groupId>
+            <artifactId>zipkin-autoconfigure-storage-elasticsearch-http</artifactId>
+            <version>2.2.3</version>
+        </dependency>
         <!--zipkin的依赖结束-->
 
     </dependencies>
+
+    <!--<dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>Brixton.SR5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>-->
 
     <build>
         <finalName>${project.artifactId}</finalName><!--打jar包去掉版本号-->
