@@ -47,24 +47,30 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+        </dependency>
+        <!--使用默认zipkin默认配置-->
+        <!--<dependency>-->
+        <!--<groupId>org.springframework.cloud</groupId>-->
+        <!--<artifactId>spring-cloud-sleuth-zipkin</artifactId>-->
+        <!--</dependency>-->
+        <!--使用rabbitMQ异步收集链路信息配置-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-zipkin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-sleuth</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bus-amqp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.amqp</groupId>
-            <artifactId>spring-rabbit</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
